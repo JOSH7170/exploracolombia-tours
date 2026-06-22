@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExploraColombia Tours</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <script>
+    (function() {
+      var serverDown = false;
+      function showError() {
+        if (serverDown) return;
+        serverDown = true;
+        document.documentElement.innerHTML =
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#f5f5f5;color:#333;text-align:center;padding:2rem">' +
+          '<h1 style="font-size:2rem;margin-bottom:1rem">Servidor desconectado</h1>' +
+          '<p style="font-size:1.2rem;color:#666">El servidor de ExploraColombia Tours no est\u00e1 disponible.</p>' +
+          '<p style="font-size:1rem;color:#999;margin-top:1rem">Inicia el servidor con <code>python app.py</code> desde la carpeta <code>backend/</code></p>' +
+          '<button onclick="location.reload()" style="margin-top:2rem;padding:0.8rem 2rem;font-size:1rem;background:#e53935;color:#fff;border:none;border-radius:8px;cursor:pointer">Reintentar</button>' +
+          '</div>';
+      }
+      function checkServer() {
+        fetch('/api/stats', { cache: 'no-store', signal: AbortSignal.timeout(3000) })
+          .catch(showError);
+      }
+      window.addEventListener('pageshow', checkServer);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) checkServer();
+      });
+      setInterval(checkServer, 5000);
+    })();
+  </script>
+  <script type="module" crossorigin src="/assets/index-DgFn8q7G.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-V5mLkxUs.css">
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>

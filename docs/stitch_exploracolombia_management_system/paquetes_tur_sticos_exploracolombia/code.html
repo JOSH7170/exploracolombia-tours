@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Paquetes - ExploraColombia</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Montserrat:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#f9f9fc",
+                    "on-primary-container": "#92ecae",
+                    "surface-dim": "#dadadc",
+                    "tertiary-fixed-dim": "#bac9d3",
+                    "inverse-surface": "#2f3133",
+                    "on-secondary-container": "#6b4b00",
+                    "secondary": "#7d5800",
+                    "surface-variant": "#e2e2e5",
+                    "background": "#f9f9fc",
+                    "inverse-on-surface": "#f0f0f3",
+                    "surface-container-highest": "#e2e2e5",
+                    "on-secondary-fixed": "#271900",
+                    "on-primary-fixed": "#00210e",
+                    "error": "#ba1a1a",
+                    "on-tertiary-container": "#cbdae5",
+                    "on-secondary-fixed-variant": "#5e4100",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "on-background": "#1a1c1e",
+                    "on-surface-variant": "#3f4941",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "outline": "#6f7a70",
+                    "tertiary": "#3a4851",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#9bf6b7",
+                    "secondary-fixed": "#ffdea9",
+                    "on-secondary": "#ffffff",
+                    "surface-container-low": "#f3f3f6",
+                    "primary-fixed-dim": "#80d99d",
+                    "secondary-fixed-dim": "#ffba26",
+                    "primary": "#00522c",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#526069",
+                    "on-tertiary-fixed-variant": "#3b4951",
+                    "secondary-container": "#ffb700",
+                    "inverse-primary": "#80d99d",
+                    "surface-container": "#eeeef0",
+                    "on-primary-fixed-variant": "#00522c",
+                    "on-tertiary-fixed": "#0f1d25",
+                    "surface-container-high": "#e8e8ea",
+                    "tertiary-fixed": "#d6e5ef",
+                    "outline-variant": "#bec9be",
+                    "on-surface": "#1a1c1e",
+                    "surface-bright": "#f9f9fc",
+                    "surface-tint": "#006d3c",
+                    "primary-container": "#006d3c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "margin-desktop": "64px",
+                    "sm": "12px",
+                    "lg": "48px",
+                    "md": "24px",
+                    "base": "8px",
+                    "xl": "80px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-md": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "table-data": ["Inter"],
+                    "headline-lg-mobile": ["Montserrat"],
+                    "headline-lg": ["Montserrat"],
+                    "display-lg": ["Montserrat"],
+                    "metric-lg": ["Montserrat"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "table-data": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "metric-lg": ["40px", {"lineHeight": "1", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>.glass-panel {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+    }
+.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.bg-hero {
+    background-image: linear-gradient(rgba(0, 82, 44, 0.4), rgba(0, 82, 44, 0.2)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuC-4whaCURVPtxCoOayFmc21HtMh4WiQTJ2Yp2Vw_Kjkjen9bsB4V_n6PbSc71eB4IIDZ_wQIaA8EFRYnInuxcerRd1OenPo8V46kTkAx3uu0Q50MoFP6YN6g1zFZZfK5xXGg1M8vB7zCPTo5_hYSZgYDyMGiqO-T_EycW16Ab39sM44xWKuMoTRQv_jZn6puqgreb7Fc1wZ2JpK-6a22fRmZ_bRvpoId6pfuckIF5SCgYNKp2WiiE62JCcCaTX7SPmUI6w17dJ3luf);
+    background-size: cover;
+    background-position: center
+    }</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen font-body-md overflow-x-hidden">
+<!-- Background Decoration -->
+<div class="fixed inset-0 bg-hero -z-10" data-alt="A sweeping aerial view of the lush Colombian Amazon rainforest during golden hour, with the winding river reflecting the warm orange sunlight. The atmosphere is vibrant and mist-covered, captured in a high-end cinematic editorial style with deep emerald greens and golden yellows, maintaining a professional and adventurous aesthetic for a luxury travel management platform."></div>
+<!-- Side Navigation Shell -->
+<nav class="hidden md:flex flex-col h-screen py-6 px-4 gap-2 h-full w-72 fixed left-0 top-0 border-r border-white/20 bg-surface/70 dark:bg-inverse-surface/70 backdrop-blur-md shadow-xl z-50">
+<div class="mb-8 px-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-on-primary-container">ExploraColombia</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Admin Portal</p>
+</div>
+<div class="flex flex-col gap-2 flex-grow">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high/50 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high/50 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-md text-label-md">Destinations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-lg transition-all duration-200 scale-95 duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high/50 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-label-md text-label-md">Guides</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high/50 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high/50 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="font-label-md text-label-md">Bookings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high/50 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+</div>
+<div class="mt-auto border-t border-white/10 pt-4">
+<a class="flex items-center gap-3 px-4 py-3 text-error hover:bg-error/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Logout</span>
+</a>
+</div>
+</nav>
+<!-- Top App Bar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-20 ml-0 md:ml-72 max-w-full md:max-w-[calc(100%-288px)] sticky top-0 bg-surface/70 backdrop-blur-md border-b border-white/20 shadow-md shadow-primary/5 z-40">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white/90 border border-outline-variant rounded-full text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="Buscar paquetes..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="hover:bg-surface-variant/30 rounded-full p-2 text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-surface-variant/30 rounded-full p-2 text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-10 w-10 rounded-full overflow-hidden border-2 border-primary/20 ml-2">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a travel administrator in a modern office, wearing business casual attire. The lighting is bright and professional, with a soft-focus background that hints at a sleek, tech-forward work environment. The person looks confident and approachable, reflecting a premium service brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVEMhqiuyPwVVF0rX4JEFGM2mYjie_WyWckdB9QHzK-k_xya0tGf-WKWonzb0xYR5vu5nGLnY0qs2LlCKuXfBbwePwrLlL6bC2A-7IkuBzF6eZlvl2JrikYfRPTfXOAG8TkGkRiiGjNX7wZVQXlmQ3cl03JbdcSVierrJCOpQUMztJvj5kBv5mNuAe6S5hMG_N6k-2o2EwJrX7ywPvi1etPh2-jOZexEgZun2o5oHH67kFavaxcjxSyQLDYzweVSkRTtzjAnUu4l0W"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-0 md:ml-72 p-margin-mobile md:p-margin-desktop">
+<div class="max-w-[1440px] mx-auto">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary mb-1">Paquetes Turísticos</h2>
+<p class="font-body-md text-on-surface-variant">Gestione sus ofertas, ocupación y destinos vinculados.</p>
+</div>
+<button class="bg-secondary-container text-on-secondary-container font-headline-md px-6 py-3 rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">add_circle</span>
+                    NUEVO PAQUETE
+                </button>
+</div>
+<!-- Dashboard Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-md mb-lg">
+<div class="glass-panel p-md rounded-xl shadow-[0_8px_30px_rgb(0,109,60,0.08)]">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Ventas Totales</p>
+<p class="font-metric-lg text-metric-lg text-primary">$42,500<span class="text-body-md font-normal">USD</span></p>
+</div>
+<div class="glass-panel p-md rounded-xl shadow-[0_8px_30px_rgb(0,109,60,0.08)]">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Ocupación Media</p>
+<p class="font-metric-lg text-metric-lg text-secondary">82%</p>
+</div>
+<div class="glass-panel p-md rounded-xl shadow-[0_8px_30px_rgb(0,109,60,0.08)]">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Paquetes Activos</p>
+<p class="font-metric-lg text-metric-lg text-primary">12</p>
+</div>
+<div class="glass-panel p-md rounded-xl shadow-[0_8px_30px_rgb(0,109,60,0.08)]">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Pendientes Pago</p>
+<p class="font-metric-lg text-metric-lg text-error">05</p>
+</div>
+</div>
+<!-- Main Inventory Grid (Asymmetric) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-md items-start">
+<!-- Large Featured Package Card -->
+<div class="lg:col-span-8 space-y-md">
+<!-- Package Item 1 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col md:flex-row group transition-all hover:shadow-2xl">
+<div class="w-full md:w-64 h-48 md:h-auto overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A vibrant landscape of the Cocora Valley in Colombia, featuring towering wax palm trees against a backdrop of misty green mountains and a clear blue sky. The lighting is crisp and natural, showcasing the majestic scale of the palms. The visual style is high-definition and editorial, evoking a sense of luxury and adventure." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACyYkODwFD3N38j1PNg1SUR2JHdeotD1kdcPXrpVyJYXL2n42QrA1DnoMCqssGzvFFr7mxUeLDGqiUViX5e3hnVMmhzJguQNqTXtgyzoEKUWv_k6xyXjOGynQJT83AUuWmSiNtKUS7AfycZ_q58eODu83VG0Ngto0D11dUz8qs7NFC00uW_KNWcJ-l2Qtti_ywt9P1toyTjrWpcejtK4AEXkKeCtSToYKiyELq9SiVQIPIUb2taYkK0ZW0GVWjqrbtAcCqiXbotF5-"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Próximo</span>
+</div>
+</div>
+<div class="flex-1 p-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Expedición Valle del Cocora</h3>
+<p class="font-headline-md text-primary">$1,250</p>
+</div>
+<div class="flex gap-4 mb-4 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-table-data">5 Días / 4 Noches</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-table-data">Max. 20</span>
+</div>
+</div>
+<!-- Occupancy Progress -->
+<div class="mb-4">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-label-md">Ocupación de Reserva</span>
+<span class="font-label-md text-label-md text-primary">15/20 Cupos</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 75%"></div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-white/20">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center" title="Eje Cafetero">
+<span class="material-symbols-outlined text-sm">coffee</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center" title="Trekking">
+<span class="material-symbols-outlined text-sm">hiking</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center" title="Transporte Privado">
+<span class="material-symbols-outlined text-sm">airport_shuttle</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-lg border-2 border-primary text-primary hover:bg-primary/5 transition-colors font-label-md">Vincular Destino</button>
+<button class="px-4 py-2 rounded-lg bg-surface-variant/50 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Package Item 2 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col md:flex-row group transition-all hover:shadow-2xl">
+<div class="w-full md:w-64 h-48 md:h-auto overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A panoramic view of the historic Walled City of Cartagena at sunset. The colonial architecture is bathed in warm, golden light, with the Caribbean Sea visible in the distance. The mood is romantic and sophisticated, with high-saturation colors and a clean, expensive aesthetic suitable for a high-end travel management UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUOUKa-aR-9Ig58w-ZGeKx4kaDlwunF4CoyHGUhfI-OqfyiUJpUxKAKADjGUEyZVB_YjHzoozXi4Y45EhIf0adVRGNtWFpP2kfz_43of8ex01wmzrmx-2k5zquG7_AsqM3s7p-uCoRrX5SnLa2QG2ptP-XU65Q-AuiUOc0N_XDpuAVZgj6Ilb_jnLrsePx9nshn_yc5n3WHYjGY3d8fYEe3RZg_Jdt703S99aJ9Mbrc--pghpxpUKniaFGAYF5PE5y4UQBEgFfmmp6"/>
+<div class="absolute top-4 left-4">
+<span class="bg-secondary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">En Curso</span>
+</div>
+</div>
+<div class="flex-1 p-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Cartagena &amp; Islas del Rosario</h3>
+<p class="font-headline-md text-primary">$1,890</p>
+</div>
+<div class="flex gap-4 mb-4 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-table-data">7 Días / 6 Noches</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-table-data">Max. 12</span>
+</div>
+</div>
+<!-- Occupancy Progress -->
+<div class="mb-4">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-label-md">Ocupación de Reserva</span>
+<span class="font-label-md text-label-md text-secondary">12/12 Cupos (Completo)</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-white/20">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center" title="Playa">
+<span class="material-symbols-outlined text-sm">beach_access</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center" title="Historia">
+<span class="material-symbols-outlined text-sm">temple_hindu</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center" title="Navegación">
+<span class="material-symbols-outlined text-sm">sailing</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-lg border-2 border-primary text-primary hover:bg-primary/5 transition-colors font-label-md">Vincular Destino</button>
+<button class="px-4 py-2 rounded-lg bg-surface-variant/50 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Package Item 3 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col md:flex-row group transition-all hover:shadow-2xl">
+<div class="w-full md:w-64 h-48 md:h-auto overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 grayscale-[50%]" data-alt="A lush, dense rainforest trail in the Sierra Nevada de Santa Marta, Colombia, leading toward a traditional indigenous hut. The atmosphere is mystical with dappled sunlight filtering through the canopy. The image is captured with professional detail, focusing on the rich textures of the tropical foliage and the serene mood of a remote jungle expedition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXGsZ8MAc9Vou8qaVSlajHer2Y5zcO-W0zba-tYuzbuc1Z1CV2iIZJbzX2upR__mOSK-tmWAceoy7kG5dgFs63WGsOY7XwobKo8T4m-KmXgFLE4edLXkZq_JNjijla8ubuLDpN-kWpEJ6tr6QqMzhC1RGKstqbS7YFuf2qtkEaqrypGnQ9VCow4wf7-efmHfAPdNzfnyRESKjJ7X7QeKRz2KXK-80TfeR7LmZW_Wd-RLebUC_p3mDwwZCEwhTuxnNpH63zcEtXK04v"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface-variant text-on-surface-variant text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Completado</span>
+</div>
+</div>
+<div class="flex-1 p-md flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-on-surface-variant">Ciudad Perdida Trek</h3>
+<p class="font-headline-md text-on-surface-variant">$850</p>
+</div>
+<div class="flex gap-4 mb-4 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-table-data">4 Días</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-table-data">Max. 15</span>
+</div>
+</div>
+<!-- Occupancy Progress -->
+<div class="mb-4">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-md text-label-md">Histórico Finalizado</span>
+<span class="font-label-md text-label-md">15/15</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden opacity-50">
+<div class="h-full bg-outline rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-white/20">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center opacity-50">
+<span class="material-symbols-outlined text-sm">terrain</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-white border border-outline-variant flex items-center justify-center opacity-50">
+<span class="material-symbols-outlined text-sm">nature_people</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-lg border-2 border-outline-variant text-outline-variant font-label-md cursor-not-allowed">Cerrado</button>
+<button class="px-4 py-2 rounded-lg bg-surface-variant/50 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Content (Bento Style) -->
+<div class="lg:col-span-4 space-y-md">
+<!-- Destinations Quick Link Card -->
+<div class="glass-panel p-md rounded-xl shadow-lg border border-primary/10">
+<h4 class="font-headline-md text-on-surface mb-4">Destinos Vinculables</h4>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-2 hover:bg-white/50 rounded-lg transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up image of Colombian coffee beans drying in the sun, with a blurred background of a traditional coffee farm." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPuZXpQ57YYu38dApEJmitPzLB-txHD0DPjFiFTy6aigjeQMPPOmNmtQTbHKZfpwx47uBuxAsjLjtprgT9zneEivlJ53gPDYfv9498f3er1H894OC6k3AUf7O5XsrlnPsXxNaUNhGCNRDMWJzaEVKbNhfY5Vq0AYvmiMhQZGNWBO0aZ3SBv4-Rg9EK-UQ_5yKFEc7EcVHgi117YWnXRG-cxgmaYR6axseIiCHyVgntUGNazVCuuso83i4w4OfO58rQiHoxqsqASPFT"/>
+</div>
+<div class="flex-grow">
+<p class="font-label-md text-label-md text-on-surface">Salento, Quindío</p>
+<p class="text-table-data text-on-surface-variant">5 Paquetes asociados</p>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">link</span>
+</div>
+<div class="flex items-center gap-3 p-2 hover:bg-white/50 rounded-lg transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Cartagena street view with colorful colonial houses and blooming bougainvillea." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEuoS7bZXL3wvtXEnDItyFy5Py0TGxd2w4qayKUsuFNGANJtdP6JqrheUyafk4eyXaWzS1JhpRza-l2_bwwG2eW2odUxCYNprkdyTqdB95B3DEf0sFAPtFzVBhji6XSMtq1Aeg0MtKLy8bKLm7PuZllM6ddbQjJeM5aZc9axivFPdz2b1vXN-fCsY-cGDGqcdCAi76GLpfuOwQQT1eLIp5ysbhT7xXxkzLyuys8BaKVuXrMDyOCJgQmEbuhzz9TvTcmmSUn8EHluMc"/>
+</div>
+<div class="flex-grow">
+<p class="font-label-md text-label-md text-on-surface">Getsemaní, Cartagena</p>
+<p class="text-table-data text-on-surface-variant">3 Paquetes asociados</p>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">link</span>
+</div>
+<div class="flex items-center gap-3 p-2 hover:bg-white/50 rounded-lg transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Amazon river aerial view." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqDf3dmIcy9tMONcx8KU9gUxcSZH5PKzpGPdznGezqPPKaR62Fp42Q993bU5PpxuBVpJDll85FBpUTRKuBH6lCgeVV7-MXTFSe-T79_Kmb4pSbUbz5QDbiDy53C1NGcaLHkut8njgypOefV1QYKTHhuByeWTm52c4I1cLanbuhQSo_Ngfkos9yeliOlso23igiSVUuabR3W_ILariNd2Fp_FFGe5qCUFK1zl6Qs6vQZqfv3-EVH6BgjzXomcKKpioiQF8VvVZaWnsF"/>
+</div>
+<div class="flex-grow">
+<p class="font-label-md text-label-md text-on-surface">Leticia, Amazonas</p>
+<p class="text-table-data text-on-surface-variant">2 Paquetes asociados</p>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">link</span>
+</div>
+</div>
+<button class="w-full mt-4 py-2 text-primary font-label-md border-t border-white/20 hover:bg-primary/5 transition-colors">Ver todos los destinos</button>
+</div>
+<!-- Upcoming Deadlines Card -->
+<div class="glass-panel p-md rounded-xl shadow-lg border border-secondary/10">
+<h4 class="font-headline-md text-on-surface mb-4">Cierres de Reserva</h4>
+<div class="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2 before:top-0 before:bottom-0 before:w-0.5 before:bg-primary/20">
+<div class="relative">
+<div class="absolute -left-5 top-1.5 w-2 h-2 rounded-full bg-error border-2 border-white"></div>
+<p class="font-label-md text-label-md text-on-surface">Valle del Cocora</p>
+<p class="text-table-data text-error font-semibold">Cierra en 48 horas</p>
+</div>
+<div class="relative">
+<div class="absolute -left-5 top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-white"></div>
+<p class="font-label-md text-label-md text-on-surface">Guajira Aventura</p>
+<p class="text-table-data text-on-surface-variant">Cierra en 12 días</p>
+</div>
+<div class="relative">
+<div class="absolute -left-5 top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-white"></div>
+<p class="font-label-md text-label-md text-on-surface">Parque Tayrona Luxury</p>
+<p class="text-table-data text-on-surface-variant">Cierra en 24 días</p>
+</div>
+</div>
+</div>
+<!-- System Info Card -->
+<div class="bg-primary text-white p-md rounded-xl shadow-xl relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-20">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">eco</span>
+</div>
+<p class="font-label-md text-label-md text-primary-fixed mb-1">TIP DEL DÍA</p>
+<p class="font-body-md">Los paquetes con actividades de <span class="font-bold">Ecoturismo</span> han tenido un incremento del 25% en reservas este trimestre.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-white/20 h-16 flex justify-around items-center px-4 z-50">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-label-md">Tablero</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-label-md">Paquetes</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[10px] font-label-md">Destinos</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">event_available</span>
+<span class="text-[10px] font-label-md">Reservas</span>
+</button>
+</nav>
+<script>
+        // Simple micro-interaction for active scaling
+        document.querySelectorAll('button:not([disabled]), a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.classList.add('scale-95');
+            });
+            el.addEventListener('mouseup', () => {
+                el.classList.remove('scale-95');
+            });
+            el.addEventListener('mouseleave', () => {
+                el.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

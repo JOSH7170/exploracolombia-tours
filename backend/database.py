@@ -1,0 +1,253 @@
+import sqlite3
+import os
+import json
+from pathlib import Path
+
+DB_PATH = Path(__file__).parent / "exploracolombia.db"
+
+
+def get_db():
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_schema():
+    conn = get_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS destinos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            departamento TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            descripcion TEXT DEFAULT '',
+            imagen TEXT DEFAULT '',
+            imagenes TEXT DEFAULT '[]'
+        );
+
+        CREATE TABLE IF NOT EXISTS paquetes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            duracion TEXT DEFAULT '',
+            precio INTEGER DEFAULT 0,
+            cupo INTEGER DEFAULT 0,
+            descripcion TEXT DEFAULT '',
+            estado TEXT DEFAULT 'Disponible',
+            imagen TEXT DEFAULT ''
+        );
+
+        CREATE TABLE IF NOT EXISTS paquete_destinos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            paquete_id INTEGER NOT NULL,
+            destino_id INTEGER NOT NULL,
+            FOREIGN KEY (paquete_id) REFERENCES paquetes(id),
+            FOREIGN KEY (destino_id) REFERENCES destinos(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS guias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            email TEXT DEFAULT '',
+            telefono TEXT DEFAULT '',
+            estado TEXT DEFAULT 'Activo'
+        );
+
+        CREATE TABLE IF NOT EXISTS guia_idiomas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guia_id INTEGER NOT NULL,
+            idioma TEXT NOT NULL,
+            FOREIGN KEY (guia_id) REFERENCES guias(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS reservas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            paquete_id INTEGER NOT NULL,
+            destino_id INTEGER,
+            guia_id INTEGER NOT NULL,
+            fecha_salida TEXT DEFAULT '',
+            estado TEXT DEFAULT 'Pendiente',
+            total INTEGER DEFAULT 0,
+            pagado INTEGER DEFAULT 0,
+            cliente_nombre TEXT DEFAULT '',
+            cliente_email TEXT DEFAULT '',
+            cliente_telefono TEXT DEFAULT '',
+            FOREIGN KEY (paquete_id) REFERENCES paquetes(id),
+            FOREIGN KEY (destino_id) REFERENCES destinos(id),
+            FOREIGN KEY (guia_id) REFERENCES guias(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
+            nombre TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user',
+            verified INTEGER DEFAULT 0,
+            verification_code TEXT,
+            verification_expiry TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT);
+
+        CREATE TABLE IF NOT EXISTS pagos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reserva_id INTEGER NOT NULL,
+            metodo TEXT NOT NULL,
+            monto INTEGER NOT NULL,
+            estado TEXT DEFAULT 'completado',
+            referencia TEXT DEFAULT '',
+            creada TEXT DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (reserva_id) REFERENCES reservas(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS registros_pendientes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            email TEXT NOT NULL,
+            password TEXT NOT NULL,
+            nombre TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user',
+            verification_code TEXT,
+            verification_expiry TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS notificaciones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            tipo TEXT NOT NULL,
+            mensaje TEXT NOT NULL,
+            relacion_id INTEGER DEFAULT NULL,
+            leida INTEGER DEFAULT 0,
+            creada TEXT NOT NULL
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+
+def migrate():
+    conn = get_db()
+    try:
+        conn.execute("ALTER TABLE destinos ADD COLUMN imagenes TEXT DEFAULT '[]'")
+        print("Migracion: columna imagenes agregada a destinos")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE reservas ADD COLUMN destino_id INTEGER REFERENCES destinos(id)")
+        print("Migracion: columna destino_id agregada a reservas")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE reservas ADD COLUMN cliente_nombre TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE reservas ADD COLUMN cliente_email TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE reservas ADD COLUMN cliente_telefono TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    conn.commit()
+    conn.close()
+
+
+def is_seeded():
+    conn = get_db()
+    row = conn.execute("SELECT value FROM _meta WHERE key = 'seeded'").fetchone()
+    conn.close()
+    return row is not None and row["value"] == "1"
+
+
+def seed():
+    conn = get_db()
+
+    destinos = [
+        ("Valle de Cocora", "Quindío", "Natural", "Hogar de la palma de cera, el árbol nacional. Un paraíso de niebla, verdes infinitos y naturaleza viva.", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Valle_del_cocora_-_general_view.jpg/960px-Valle_del_cocora_-_general_view.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Paisaje_Valle_del_Cocora.jpg/960px-Paisaje_Valle_del_Cocora.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Valle_de_Cocora%2C_Colombia_02.jpg/960px-Valle_de_Cocora%2C_Colombia_02.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/View_of_the_Cerro_Morrogacho_in_the_C%C3%B3cora_Valley.jpg/960px-View_of_the_Cerro_Morrogacho_in_the_C%C3%B3cora_Valley.jpg"]'),
+        ("Ciudad Amurallada", "Cartagena", "Cultural", "Tesoro colonial bañado por el Caribe. Calles empedradas, balcones floridos y una historia que enamora.", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Centro_historico_de_Cartagena.jpg/960px-Centro_historico_de_Cartagena.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Atardecer_en_Cartagena_de_Indias_desde_La_Popa..jpg/960px-Atardecer_en_Cartagena_de_Indias_desde_La_Popa..jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Ciudad_amurallada_fog.jpg/960px-Ciudad_amurallada_fog.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Clock_Tower_CTG_11_2019_1352.jpg/960px-Clock_Tower_CTG_11_2019_1352.jpg"]'),
+        ("Minca", "Magdalena", "Aventura", "Capital ecológica de la Sierra Nevada. Cascadas, café de altura y avistamiento de aves.", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Amanecer_en_la_Sierra.jpg/960px-Amanecer_en_la_Sierra.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Amanecer_en_la_Cuchilla_-_Nevados_-_Santa_Marta_-_Flickr_-_Alejandro_Bayer.jpg/960px-Amanecer_en_la_Cuchilla_-_Nevados_-_Santa_Marta_-_Flickr_-_Alejandro_Bayer.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Cuchilla_de_San_Lorenzo%2C_Sierra_Nevada_de_Santa_Marta%2C_Magdalena%2C_Colombia.jpg/960px-Cuchilla_de_San_Lorenzo%2C_Sierra_Nevada_de_Santa_Marta%2C_Magdalena%2C_Colombia.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Quebrada_valencia_santa_marta.jpg/960px-Quebrada_valencia_santa_marta.jpg"]'),
+        ("Parque Tayrona", "Magdalena", "Natural", "Joyas natural del Caribe colombiano. Playas de ensueño, selva virgen y ruinas Tayrona.", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Arrecifes.jpg/960px-Arrecifes.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Adventourscolombia-playa-cabo-san-juan-tayrona-national-park-colombia-01.jpg/960px-Adventourscolombia-playa-cabo-san-juan-tayrona-national-park-colombia-01.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Adventourscolombia-tayrona-national-park-colombia.jpg/960px-Adventourscolombia-tayrona-national-park-colombia.jpg"]'),
+        ("Caño Cristales", "Meta", "Natural", "El río más hermoso del mundo. Un espectáculo de colores creado por la naturaleza.", "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Ca%C3%B1o_Cristales_01.jpg/960px-Ca%C3%B1o_Cristales_01.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Ca%C3%B1o_Cristales2.JPG/960px-Ca%C3%B1o_Cristales2.JPG","https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Ca%C3%B1o_cristales_%28La_Macarena%29.jpg/960px-Ca%C3%B1o_cristales_%28La_Macarena%29.jpg"]'),
+        ("Guatapé", "Antioquia", "Cultural", "Pueblo colorido con el imponente Peñón de Guatapé.", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/El_Pe%C3%B1ol_de_Guatap%C3%A9_%28The_Rock_of_Guatape%29_2017-04-10.jpg/960px-El_Pe%C3%B1ol_de_Guatap%C3%A9_%28The_Rock_of_Guatape%29_2017-04-10.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Calle_de_Guatap%C3%A9.jpg/960px-Calle_de_Guatap%C3%A9.jpg","https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Guatap%C3%A9_25.jpg/960px-Guatap%C3%A9_25.jpg"]'),
+        ("Desierto de la Tatacoa", "Huila", "Aventura", "Paisaje lunar de arcilla roja y gris. Perfecto para astroturismo.", "https://upload.wikimedia.org/wikipedia/commons/a/ac/Desierto_de_la_Tatacoa_-_camilogaleano%28com%29.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Desierto_de_la_Tatacoa%2C_Villavieja%2C_Huila%2C_Colombia._%282%29.JPG/960px-Desierto_de_la_Tatacoa%2C_Villavieja%2C_Huila%2C_Colombia._%282%29.JPG","https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Desierto_de_la_Tatacoa%2C_Villavieja%2C_Huila%2C_Colombia_%281%29.JPG/960px-Desierto_de_la_Tatacoa%2C_Villavieja%2C_Huila%2C_Colombia_%281%29.JPG","https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Desierto_de_la_Tatacoa_%28Huila%29%2C_Colombia.jpg/960px-Desierto_de_la_Tatacoa_%28Huila%29%2C_Colombia.jpg"]'),
+        ("San Andrés", "San Andrés", "Natural", "Isla de aguas cristalinas de siete colores. Arena blanca y arrecifes.", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Rocky_Cay_Beach.jpg/960px-Rocky_Cay_Beach.jpg", '["https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Playa_en_San_Andres.JPG/960px-Playa_en_San_Andres.JPG","https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Playa_Parque_Nacional_Natural_Archipi%C3%A9lago_de_San_Andr%C3%A9s.jpg/960px-Playa_Parque_Nacional_Natural_Archipi%C3%A9lago_de_San_Andr%C3%A9s.jpg","https://upload.wikimedia.org/wikipedia/commons/7/72/San_Andr%C3%A9s_Island_Colombia.JPG"]'),
+    ]
+    conn.executemany(
+        "INSERT INTO destinos (nombre, departamento, tipo, descripcion, imagen, imagenes) VALUES (?, ?, ?, ?, ?, ?)",
+        destinos,
+    )
+
+    paquetes = [
+        ("Aventura Cafetera", "5 días", 1200000, 20, "Recorre el Eje Cafetero: Cocora, termales, fincas cafeteras y pueblos patrimoniales.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Bogota%27s_best_coffee._IMG_5865._png.jpg/960px-Bogota%27s_best_coffee._IMG_5865._png.jpg"),
+        ("Caribe Mágico", "4 días", 980000, 15, "Sol, playa y cultura en Cartagena y el Parque Tayrona.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Centro_historico_de_Cartagena.jpg/960px-Centro_historico_de_Cartagena.jpg"),
+        ("Exploración Sierra Nevada", "6 días", 1500000, 12, "Aventura en Minca, Ciudad Perdida y la Sierra Nevada.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Amanecer_en_la_Sierra.jpg/960px-Amanecer_en_la_Sierra.jpg"),
+        ("Río de Colores", "3 días", 850000, 18, "Visita a Caño Cristales en su temporada de colores.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Ca%C3%B1o_Cristales_01.jpg/960px-Ca%C3%B1o_Cristales_01.jpg"),
+        ("Aventura Total Colombia", "10 días", 3200000, 8, "El tour definitivo: Cocora, Cartagena, Tayrona, Caño Cristales y más.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Valle_del_cocora_-_general_view.jpg/960px-Valle_del_cocora_-_general_view.jpg"),
+        ("Isla Paraíso", "5 días", 2100000, 10, "San Andrés y Providencia: mar de siete colores y arrecifes.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Rocky_Cay_Beach.jpg/960px-Rocky_Cay_Beach.jpg"),
+    ]
+    conn.executemany(
+        "INSERT INTO paquetes (nombre, duracion, precio, cupo, descripcion, estado, imagen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        paquetes,
+    )
+
+    pd_pairs = [(1, 1), (1, 6), (2, 2), (2, 4), (3, 3), (4, 5), (5, 1), (5, 2), (5, 4), (5, 5), (6, 8)]
+    conn.executemany(
+        "INSERT INTO paquete_destinos (paquete_id, destino_id) VALUES (?, ?)",
+        pd_pairs,
+    )
+
+    guias_data = [
+        ("Carlos Pérez", "carlos@exploracolombia.co", "+57 300 123 4567", "Activo", ["Español", "Inglés"]),
+        ("Luisa Gómez", "luisa@exploracolombia.co", "+57 300 234 5678", "Activo", ["Español", "Francés"]),
+        ("Andrés Martínez", "andres@exploracolombia.co", "+57 300 345 6789", "Activo", ["Español", "Inglés", "Portugués"]),
+        ("María Torres", "maria@exploracolombia.co", "+57 300 456 7890", "Activo", ["Español", "Alemán"]),
+        ("Jorge Ramírez", "jorge@exploracolombia.co", "+57 300 567 8901", "Activo", ["Español", "Inglés", "Italiano"]),
+    ]
+    for nombre, email, tel, estado, idiomas in guias_data:
+        cur = conn.execute(
+            "INSERT INTO guias (nombre, email, telefono, estado) VALUES (?, ?, ?, ?)",
+            (nombre, email, tel, estado),
+        )
+        for idioma in idiomas:
+            conn.execute(
+                "INSERT INTO guia_idiomas (guia_id, idioma) VALUES (?, ?)",
+                (cur.lastrowid, idioma),
+            )
+
+    reservas = [
+        (1, 1, 1, "2026-06-15", "Confirmada", 1200000, 0, "Ana Rodríguez", "ana@email.com", "+57 310 111 2233"),
+        (2, 2, 2, "2026-07-01", "Pendiente", 980000, 0, "Pedro López", "pedro@email.com", "+57 310 222 3344"),
+        (3, 3, 3, "2026-05-28", "Confirmada", 1500000, 0, "Sofía Medina", "sofia@email.com", "+57 310 333 4455"),
+        (4, 4, 1, "2026-08-10", "Confirmada", 850000, 0, "Luis Hernández", "luis@email.com", "+57 310 444 5566"),
+        (5, 5, 5, "2026-09-05", "Pendiente", 3200000, 0, "Camila Vargas", "camila@email.com", "+57 310 555 6677"),
+        (1, 6, 4, "2026-04-20", "Cancelada", 2100000, 0, "Ana Rodríguez", "ana@email.com", "+57 310 111 2233"),
+    ]
+    conn.executemany(
+        "INSERT INTO reservas (paquete_id, destino_id, guia_id, fecha_salida, estado, total, pagado, cliente_nombre, cliente_email, cliente_telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        reservas,
+    )
+
+    usuarios = [
+        ("admin", "admin@exploracolombia.co", "admin", "Fox", "admin", 1, None, None),
+        ("user", "user@exploracolombia.co", "user", "Usuario Demo", "user", 1, None, None),
+    ]
+    for username, email, password, nombre, role, verified, code, expiry in usuarios:
+        existing = conn.execute(
+            "SELECT id FROM usuarios WHERE username = ?", (username,)
+        ).fetchone()
+        if not existing:
+            conn.execute(
+                "INSERT INTO usuarios (username, email, password, nombre, role, verified, verification_code, verification_expiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (username, email, password, nombre, role, verified, code, expiry),
+            )
+
+    conn.execute("INSERT OR IGNORE INTO _meta (key, value) VALUES ('seeded', '1')")
+
+    conn.commit()
+    conn.close()
+    print("Base de datos poblada exitosamente!")

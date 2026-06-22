@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ExploraColombia | Portal de Gestión</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Shared Component Styling Hook -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed-variant": "#00522c",
+                    "tertiary-fixed-dim": "#bac9d3",
+                    "on-secondary-container": "#6b4b00",
+                    "on-secondary": "#ffffff",
+                    "on-surface": "#1a1c1e",
+                    "tertiary": "#3a4851",
+                    "secondary-fixed": "#ffdea9",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#9bf6b7",
+                    "surface-bright": "#f9f9fc",
+                    "surface-container-high": "#e8e8ea",
+                    "on-secondary-fixed": "#271900",
+                    "surface-variant": "#e2e2e5",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#f9f9fc",
+                    "surface-container": "#eeeef0",
+                    "secondary": "#7d5800",
+                    "secondary-container": "#ffb700",
+                    "surface-container-highest": "#e2e2e5",
+                    "outline-variant": "#bec9be",
+                    "surface-dim": "#dadadc",
+                    "on-tertiary-fixed": "#0f1d25",
+                    "inverse-primary": "#80d99d",
+                    "primary-container": "#006d3c",
+                    "inverse-surface": "#2f3133",
+                    "inverse-on-surface": "#f0f0f3",
+                    "on-surface-variant": "#3f4941",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#d6e5ef",
+                    "secondary-fixed-dim": "#ffba26",
+                    "surface-tint": "#006d3c",
+                    "error": "#ba1a1a",
+                    "surface": "#f9f9fc",
+                    "surface-container-low": "#f3f3f6",
+                    "primary": "#00522c",
+                    "primary-fixed-dim": "#80d99d",
+                    "on-tertiary-fixed-variant": "#3b4951",
+                    "on-secondary-fixed-variant": "#5e4100",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#526069",
+                    "on-primary-fixed": "#00210e",
+                    "on-primary-container": "#92ecae",
+                    "outline": "#6f7a70",
+                    "on-background": "#1a1c1e",
+                    "on-tertiary-container": "#cbdae5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "24px",
+                    "base": "8px",
+                    "xl": "80px",
+                    "xs": "4px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "sm": "12px",
+                    "lg": "48px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "table-data": ["Inter"],
+                    "headline-md": ["Montserrat"],
+                    "display-lg": ["Montserrat"],
+                    "headline-lg-mobile": ["Montserrat"],
+                    "headline-lg": ["Montserrat"],
+                    "metric-lg": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "table-data": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "metric-lg": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            border-left: 1px solid rgba(255, 255, 255, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .hero-overlay {
+            background: linear-gradient(to bottom, rgba(0, 82, 44, 0.4), rgba(0, 0, 0, 0.6));
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        /* Custom glow for focus states */
+        .input-focus-glow:focus {
+            box-shadow: 0 0 0 4px rgba(0, 82, 44, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background overflow-hidden h-screen w-full">
+<!-- Background Layer with Photography -->
+<div class="fixed inset-0 z-0">
+<img alt="Cocora Valley Landscape" class="w-full h-full object-cover" data-alt="A breathtaking cinematic wide shot of the Cocora Valley in Colombia, showcasing iconic towering wax palm trees rising through ethereal morning mist. The lush, vibrant emerald green rolling hills are bathed in soft, golden sunlight filtering through a cloudy sky. The visual style is high-end editorial photography with a rich, saturated color palette of deep greens and misty whites, creating a serene and adventurous atmosphere for a premium travel brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuFauo5zi62xDrnu8wqhPQ3UC4tE3Yu6J_S3WbA_TCsJ3jK5s7lfQfrEeUrzNeXWkiP8btmuDpTM8vY49IaLv1VPLFJ6HJqtkqyX2_tlmyw6G3QrmHWkH9FnsiyqHMTf7FqLERdTYJm3zOkYRMMwbnoV7J12PCx7_foR27KZiAL8TTmyp-70Itr6CssWY9tT6H7qipikDDvnkjgUyaCM22cJp-hfeq9tyanqELlvykwypTht5Ep4HsaEriqOL2F3o05UTF3z0TDMjM"/>
+<div class="absolute inset-0 hero-overlay"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 flex flex-col items-center justify-center h-screen px-margin-mobile md:px-margin-desktop">
+<!-- Login Container -->
+<div class="glass-card w-full max-w-[440px] p-md md:p-lg rounded-xl shadow-[0_24px_48px_rgba(0,109,60,0.12)] border border-white/20 animate-in fade-in zoom-in duration-700">
+<!-- Brand Identity -->
+<div class="flex flex-col items-center mb-lg">
+<div class="w-20 h-20 bg-primary-container rounded-full flex items-center justify-center mb-md shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary-container text-[40px]" data-icon="explore">explore</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight mb-xs">ExploraColombia</h1>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Portal de Gestión</p>
+</div>
+<!-- Login Form -->
+<form action="#" class="space-y-md">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface ml-1" for="username">Usuario</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-body-md" data-icon="person">person</span>
+<input class="w-full pl-12 pr-4 py-3 bg-white/90 border border-outline-variant rounded-lg font-body-md text-body-md focus:border-primary focus:ring-0 input-focus-glow transition-all outline-none" id="username" name="username" placeholder="Ingrese su usuario" required="" type="text"/>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between items-center px-1">
+<label class="font-label-md text-label-md text-on-surface" for="password">Contraseña</label>
+<a class="text-[12px] font-label-md text-primary hover:underline transition-colors" href="#">¿Olvidó su clave?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-body-md" data-icon="lock">lock</span>
+<input class="w-full pl-12 pr-4 py-3 bg-white/90 border border-outline-variant rounded-lg font-body-md text-body-md focus:border-primary focus:ring-0 input-focus-glow transition-all outline-none" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-body-md" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 px-1">
+<input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20" id="remember" name="remember" type="checkbox"/>
+<label class="font-body-md text-label-md text-on-surface-variant cursor-pointer" for="remember">Recordar sesión</label>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary font-headline-md text-label-md uppercase tracking-wider rounded-lg shadow-lg shadow-primary/20 hover:bg-primary-container hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 mt-4" type="submit">
+                    Iniciar Sesión
+                </button>
+</form>
+<!-- Secondary Actions -->
+<div class="mt-lg pt-md border-t border-black/5 flex flex-col items-center gap-md">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 opacity-60">
+<span class="material-symbols-outlined text-[16px]" data-icon="verified_user">verified_user</span>
+<span class="text-[11px] font-label-md uppercase tracking-tighter">SSL Secure</span>
+</div>
+<div class="w-px h-3 bg-outline-variant/30"></div>
+<div class="flex items-center gap-1.5 opacity-60">
+<span class="material-symbols-outlined text-[16px]" data-icon="gpp_good">gpp_good</span>
+<span class="text-[11px] font-label-md uppercase tracking-tighter">Encrypted</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Language Selection -->
+<footer class="mt-lg flex flex-col items-center gap-md text-white/80">
+<div class="flex gap-md font-label-md text-label-md">
+<a class="hover:text-secondary-fixed transition-colors" href="#">Soporte Técnico</a>
+<span class="text-white/20">|</span>
+<a class="hover:text-secondary-fixed transition-colors" href="#">Privacidad</a>
+<span class="text-white/20">|</span>
+<a class="hover:text-secondary-fixed transition-colors" href="#">Términos</a>
+</div>
+<p class="text-[12px] opacity-60 font-body-md">© 2024 ExploraColombia. Todos los derechos reservados.</p>
+</footer>
+</main>
+<!-- Interactive Layer: Atmospheric Mist Micro-interaction -->
+<div class="fixed inset-0 pointer-events-none z-5" id="mist-layer"></div>
+<script>
+        // Micro-interaction: Mouse parallax for the glass card
+        document.addEventListener('mousemove', (e) => {
+            const card = document.querySelector('.glass-card');
+            const x = (window.innerWidth / 2 - e.pageX) / 45;
+            const y = (window.innerHeight / 2 - e.pageY) / 45;
+            card.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+        });
+
+        // Icon handling for material symbols
+        document.querySelectorAll('[data-icon]').forEach(el => {
+            const iconName = el.getAttribute('data-icon');
+            const span = document.createElement('span');
+            span.className = 'material-symbols-outlined';
+            span.textContent = iconName;
+            
+            // Check for weight/fill
+            if (el.getAttribute('data-weight') === 'fill') {
+                span.style.fontVariationSettings = "'FILL' 1";
+            }
+            
+            // If the element is meant to BE the icon (like in the inputs)
+            if (el.tagName === 'SPAN' && el.classList.contains('material-symbols-outlined')) {
+                el.textContent = iconName;
+            } else {
+                // If it's a wrapper, we replace its content or append
+                el.innerHTML = '';
+                el.appendChild(span);
+            }
+        });
+    </script>
+</body></html>
