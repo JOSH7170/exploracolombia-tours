@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useApi } from '../composables/useApi'
@@ -12,12 +12,16 @@ const stats = ref({ paquetesActivos: 0, reservasHoy: 0, cupoTotal: 0, ingresosMe
 const ocupacion = ref([])
 const ingresos = ref([])
 const promociones = ref([])
+const destacados = ref([])
+const carouselIndex = ref(0)
+let autoplayTimer = null
 
 onMounted(async () => {
   try {
     const paquetes = await api.getPaquetes()
     const disponibles = paquetes.filter(p => p.estado !== 'Completado')
-    promociones.value = disponibles.slice(0, 3)
+    destacados.value = disponibles.slice(0, 5)
+    promociones.value = disponibles.filter(p => p.en_oferta == 1).slice(0, 3)
     if (store.isAdmin) {
       stats.value = await api.getStats()
       ocupacion.value = await api.getOcupacionData()
@@ -26,10 +30,34 @@ onMounted(async () => {
   } catch (e) {
     store.toast('Error al cargar datos del dashboard: ' + e.message, 'error')
   }
+  startAutoplay()
+})
+
+onUnmounted(() => {
+  stopAutoplay()
 })
 
 function maxIngresos() {
   return Math.max(...ingresos.value.map(i => i.ingresos), 1)
+}
+function goToSlide(index) {
+  carouselIndex.value = index
+}
+function nextSlide() {
+  goToSlide((carouselIndex.value + 1) % destacados.value.length)
+}
+function prevSlide() {
+  goToSlide((carouselIndex.value - 1 + destacados.value.length) % destacados.value.length)
+}
+function startAutoplay() {
+  stopAutoplay()
+  autoplayTimer = setInterval(() => nextSlide(), 5000)
+}
+function stopAutoplay() {
+  if (autoplayTimer) {
+    clearInterval(autoplayTimer)
+    autoplayTimer = null
+  }
 }
 </script>
 
@@ -134,6 +162,37 @@ function maxIngresos() {
       </div>
     </div>
 
+    <!-- Carousel for regular users -->
+    <div v-if="!store.isAdmin && destacados.length" class="featured-section">
+      <div class="section-header">
+        <h2><span class="material-symbols-outlined" style="color:var(--secondary)">explore</span> <span>Destinos destacados</span></h2>
+      </div>
+      <div class="carousel-wrapper" @mouseenter="stopAutoplay" @mouseleave="startAutoplay">
+        <div class="carousel-container">
+          <div class="carousel-track" :style="{ transform: `translateX(-${carouselIndex * 100}%)` }">
+            <div v-for="(p, i) in destacados" :key="p.id" class="carousel-slide">
+              <div class="slide-bg">
+                <img :src="p.imagen" alt="" @error="e => e.target.style.display = 'none'" />
+              </div>
+              <div class="slide-overlay"></div>
+              <div class="slide-content">
+                <h2>{{ p.nombre }}</h2>
+                <p class="slide-desc">{{ p.descripcion }}</p>
+                <div class="slide-price">
+                  Desde <strong>{{ api.formatCurrency(p.precio) }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-btn prev" @click="prevSlide"><span class="material-symbols-outlined">chevron_left</span></button>
+        <button class="carousel-btn next" @click="nextSlide"><span class="material-symbols-outlined">chevron_right</span></button>
+        <div class="carousel-dots-modern">
+          <span v-for="(_, i) in destacados" :key="i" :class="{ active: carouselIndex === i }" @click="goToSlide(i)"></span>
+        </div>
+      </div>
+    </div>
+
     <!-- Promo cards for regular users -->
     <div v-if="!store.isAdmin && promociones.length" class="promos-section">
       <div class="section-header">
@@ -154,11 +213,12 @@ function maxIngresos() {
               <span><span class="material-symbols-outlined">group</span> {{ p.cupo }} cupos</span>
             </div>
             <p class="oferta-desc">{{ p.descripcion }}</p>
-            <div class="oferta-footer">
-              <div class="oferta-price">
-                <span class="oferta-label">Por persona</span>
-                <strong>{{ api.formatCurrency(p.precio) }}</strong>
-              </div>
+              <div class="oferta-footer">
+                <div class="oferta-price">
+                  <span class="oferta-label">Por persona</span>
+                  <span v-if="p.precio_oferta" style="text-decoration:line-through;color:var(--outline);font-size:13px;font-weight:400">{{ api.formatCurrency(p.precio) }}</span>
+                  <strong>{{ api.formatCurrency(p.precio_oferta || p.precio) }}</strong>
+                </div>
               <button class="btn-oferta" @click="router.push('/reservas')">
                 <span class="material-symbols-outlined">bolt</span> Reservar
               </button>
@@ -168,7 +228,7 @@ function maxIngresos() {
       </div>
     </div>
 
-    <div v-if="!destacados && !store.isAdmin" class="glass-card" style="border-radius:var(--radius-lg);padding:32px;text-align:center;margin-top:32px">
+    <div v-if="!store.isAdmin && !destacados.length" class="glass-card" style="border-radius:var(--radius-lg);padding:32px;text-align:center;margin-top:32px">
       <span class="material-symbols-outlined" style="font-size:48px;color:var(--outline)">explore</span>
       <h3 style="font-family:var(--font-heading);margin-top:12px;color:var(--on-surface-variant)">Bienvenido a ExploraColombia</h3>
       <p style="color:var(--outline);margin-top:4px">Los datos del dashboard aparecerán aquí cuando haya contenido disponible.</p>
@@ -322,5 +382,123 @@ function maxIngresos() {
   margin-top: 6px;
   text-transform: uppercase;
   font-weight: 600;
+}
+.featured-section {
+  margin-top: 32px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-header h2 {
+  font-size: 18px;
+  font-family: var(--font-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.carousel-wrapper {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.carousel-container {
+  overflow: hidden;
+}
+.carousel-track {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.carousel-slide {
+  min-width: 100%;
+  position: relative;
+  height: 400px;
+}
+.slide-bg {
+  position: absolute;
+  inset: 0;
+}
+.slide-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.slide-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.05) 100%);
+}
+.slide-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px;
+  color: #fff;
+}
+.slide-content h2 {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+.slide-desc {
+  font-size: 14px;
+  opacity: 0.85;
+  max-width: 500px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.slide-price {
+  font-size: 15px;
+}
+.slide-price strong {
+  font-size: 24px;
+  color: var(--secondary);
+}
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 2;
+}
+.carousel-btn:hover {
+  background: rgba(255,255,255,0.35);
+}
+.carousel-btn.prev { left: 16px; }
+.carousel-btn.next { right: 16px; }
+.carousel-dots-modern {
+  position: absolute;
+  bottom: 16px;
+  right: 40px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+.carousel-dots-modern span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.carousel-dots-modern span.active {
+  width: 24px;
+  border-radius: 4px;
+  background: #fff;
 }
 </style>

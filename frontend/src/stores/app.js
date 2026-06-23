@@ -147,6 +147,22 @@ export const useAppStore = defineStore('app', {
               <label>Descripción</label>
               <textarea id="f-descripcion" rows="2" placeholder="Descripción del paquete..."></textarea>
             </div>
+            <div class="form-group" style="border:1px solid var(--secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;background:rgba(255,183,0,0.04)">
+              <label style="display:flex;align-items:center;gap:6px;color:var(--secondary);font-weight:700">
+                <span class="material-symbols-outlined" style="font-size:16px">local_offer</span> Oferta especial
+              </label>
+              <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
+                <div class="form-group">
+                  <label>Precio de oferta ($)</label>
+                  <input type="number" id="f-precioOferta" placeholder="Ej: 980000">
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px">
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                    <input type="checkbox" id="f-enOferta" value="1"> Activar oferta
+                  </label>
+                </div>
+              </div>
+            </div>
             <div class="form-group">
               <label>URL de imagen</label>
               <input type="text" id="f-imagen" placeholder="https://images.unsplash.com/...">
@@ -219,6 +235,8 @@ export const useAppStore = defineStore('app', {
             document.getElementById('f-estado').value = item.estado
             document.getElementById('f-descripcion').value = item.descripcion
             document.getElementById('f-imagen').value = item.imagen || ''
+            document.getElementById('f-precioOferta').value = item.precio_oferta || ''
+            document.getElementById('f-enOferta').checked = item.en_oferta == 1
             document.querySelectorAll('#paquete-destinos-chips input[type="checkbox"]').forEach(cb => {
               cb.checked = item.destinos && item.destinos.includes(parseInt(cb.value))
             })
@@ -270,6 +288,8 @@ export const useAppStore = defineStore('app', {
             estado: document.getElementById('f-estado').value,
             descripcion: document.getElementById('f-descripcion').value.trim(),
             imagen: document.getElementById('f-imagen').value.trim() || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=85',
+            precioOferta: document.getElementById('f-precioOferta').value ? parseInt(document.getElementById('f-precioOferta').value) : null,
+            enOferta: document.getElementById('f-enOferta').checked ? 1 : 0,
             destinos: [],
           }
           document.querySelectorAll('#paquete-destinos-chips input[type="checkbox"]:checked').forEach(cb => {

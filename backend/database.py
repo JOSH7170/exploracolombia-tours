@@ -3,7 +3,8 @@ import os
 import json
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "exploracolombia.db"
+DB_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT") or Path(__file__).parent
+DB_PATH = Path(DB_DIR) / "exploracolombia.db"
 
 
 def get_db():
@@ -35,7 +36,9 @@ def init_schema():
             cupo INTEGER DEFAULT 0,
             descripcion TEXT DEFAULT '',
             estado TEXT DEFAULT 'Disponible',
-            imagen TEXT DEFAULT ''
+            imagen TEXT DEFAULT '',
+            precio_oferta INTEGER,
+            en_oferta INTEGER DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS paquete_destinos (
@@ -153,6 +156,14 @@ def migrate():
         conn.execute("ALTER TABLE reservas ADD COLUMN cliente_telefono TEXT DEFAULT ''")
     except sqlite3.OperationalError:
         pass
+    try:
+        conn.execute("ALTER TABLE paquetes ADD COLUMN precio_oferta INTEGER")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE paquetes ADD COLUMN en_oferta INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -183,15 +194,15 @@ def seed():
     )
 
     paquetes = [
-        ("Aventura Cafetera", "5 días", 1200000, 20, "Recorre el Eje Cafetero: Cocora, termales, fincas cafeteras y pueblos patrimoniales.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Bogota%27s_best_coffee._IMG_5865._png.jpg/960px-Bogota%27s_best_coffee._IMG_5865._png.jpg"),
-        ("Caribe Mágico", "4 días", 980000, 15, "Sol, playa y cultura en Cartagena y el Parque Tayrona.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Centro_historico_de_Cartagena.jpg/960px-Centro_historico_de_Cartagena.jpg"),
-        ("Exploración Sierra Nevada", "6 días", 1500000, 12, "Aventura en Minca, Ciudad Perdida y la Sierra Nevada.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Amanecer_en_la_Sierra.jpg/960px-Amanecer_en_la_Sierra.jpg"),
-        ("Río de Colores", "3 días", 850000, 18, "Visita a Caño Cristales en su temporada de colores.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Ca%C3%B1o_Cristales_01.jpg/960px-Ca%C3%B1o_Cristales_01.jpg"),
-        ("Aventura Total Colombia", "10 días", 3200000, 8, "El tour definitivo: Cocora, Cartagena, Tayrona, Caño Cristales y más.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Valle_del_cocora_-_general_view.jpg/960px-Valle_del_cocora_-_general_view.jpg"),
-        ("Isla Paraíso", "5 días", 2100000, 10, "San Andrés y Providencia: mar de siete colores y arrecifes.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Rocky_Cay_Beach.jpg/960px-Rocky_Cay_Beach.jpg"),
+        ("Aventura Cafetera", "5 días", 1200000, 20, "Recorre el Eje Cafetero: Cocora, termales, fincas cafeteras y pueblos patrimoniales.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Bogota%27s_best_coffee._IMG_5865._png.jpg/960px-Bogota%27s_best_coffee._IMG_5865._png.jpg", 980000, 1),
+        ("Caribe Mágico", "4 días", 980000, 15, "Sol, playa y cultura en Cartagena y el Parque Tayrona.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Centro_historico_de_Cartagena.jpg/960px-Centro_historico_de_Cartagena.jpg", None, 0),
+        ("Exploración Sierra Nevada", "6 días", 1500000, 12, "Aventura en Minca, Ciudad Perdida y la Sierra Nevada.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Amanecer_en_la_Sierra.jpg/960px-Amanecer_en_la_Sierra.jpg", 1200000, 1),
+        ("Río de Colores", "3 días", 850000, 18, "Visita a Caño Cristales en su temporada de colores.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Ca%C3%B1o_Cristales_01.jpg/960px-Ca%C3%B1o_Cristales_01.jpg", None, 0),
+        ("Aventura Total Colombia", "10 días", 3200000, 8, "El tour definitivo: Cocora, Cartagena, Tayrona, Caño Cristales y más.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Valle_del_cocora_-_general_view.jpg/960px-Valle_del_cocora_-_general_view.jpg", 2600000, 1),
+        ("Isla Paraíso", "5 días", 2100000, 10, "San Andrés y Providencia: mar de siete colores y arrecifes.", "Disponible", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Rocky_Cay_Beach.jpg/960px-Rocky_Cay_Beach.jpg", None, 0),
     ]
     conn.executemany(
-        "INSERT INTO paquetes (nombre, duracion, precio, cupo, descripcion, estado, imagen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO paquetes (nombre, duracion, precio, cupo, descripcion, estado, imagen, precio_oferta, en_oferta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         paquetes,
     )
 

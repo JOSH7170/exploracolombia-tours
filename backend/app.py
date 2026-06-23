@@ -501,7 +501,7 @@ def create_paquete():
         return error_response("El nombre es requerido")
     conn = get_db()
     cur = conn.execute(
-        "INSERT INTO paquetes (nombre, duracion, precio, cupo, descripcion, estado, imagen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO paquetes (nombre, duracion, precio, cupo, descripcion, estado, imagen, precio_oferta, en_oferta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             nombre,
             data.get("duracion", ""),
@@ -510,6 +510,8 @@ def create_paquete():
             data.get("descripcion", ""),
             data.get("estado", "Disponible"),
             data.get("imagen", ""),
+            data.get("precioOferta"),
+            data.get("enOferta", 0),
         ),
     )
     paquete_id = cur.lastrowid
@@ -536,7 +538,7 @@ def update_paquete(id):
         return error_response("Paquete no encontrado", 404)
     data = request.get_json(silent=True) or {}
     conn.execute(
-        "UPDATE paquetes SET nombre=?, duracion=?, precio=?, cupo=?, descripcion=?, estado=?, imagen=? WHERE id=?",
+        "UPDATE paquetes SET nombre=?, duracion=?, precio=?, cupo=?, descripcion=?, estado=?, imagen=?, precio_oferta=?, en_oferta=? WHERE id=?",
         (
             data.get("nombre", existing["nombre"]),
             data.get("duracion", existing["duracion"]),
@@ -545,6 +547,8 @@ def update_paquete(id):
             data.get("descripcion", existing["descripcion"]),
             data.get("estado", existing["estado"]),
             data.get("imagen", existing["imagen"]),
+            data.get("precioOferta", existing["precio_oferta"]),
+            data.get("enOferta", existing["en_oferta"]),
             id,
         ),
     )
