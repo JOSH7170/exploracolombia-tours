@@ -3,7 +3,7 @@ import os
 import json
 from pathlib import Path
 
-DB_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT") or Path(__file__).parent
+DB_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") or Path(__file__).parent
 DB_PATH = Path(DB_DIR) / "exploracolombia.db"
 
 
