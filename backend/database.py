@@ -1,23 +1,89 @@
-import sqlite3
 import os
 import json
 from pathlib import Path
+from datetime import datetime
 
-DB_DIR = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") or Path(__file__).parent
-DB_PATH = Path(DB_DIR) / "exploracolombia.db"
+DB_TYPE = "postgres" if os.environ.get("DATABASE_URL") else "sqlite"
+
+
+class DBConnection:
+    def __init__(self):
+        self.conn = None
+        self.db_type = DB_TYPE
+        if DB_TYPE == "postgres":
+            self._init_postgres()
+        else:
+            self._init_sqlite()
+
+    def _init_postgres(self):
+        import psycopg2
+        import psycopg2.extras
+        self.conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        self.conn.autocommit = False
+        self._cursor_factory = psycopg2.extras.RealDictCursor
+
+    def _init_sqlite(self):
+        import sqlite3
+        db_dir = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") or Path(__file__).parent
+        db_path = Path(db_dir) / "exploracolombia.db"
+        self.conn = sqlite3.connect(str(db_path))
+        self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA journal_mode = WAL")
+        self.conn.execute("PRAGMA foreign_keys = ON")
+
+    def execute(self, sql, params=None):
+        if DB_TYPE == "postgres":
+            pg_sql = sql.replace("?", "%s")
+            cur = self.conn.cursor(cursor_factory=self._cursor_factory)
+            cur.execute(pg_sql, params or ())
+            is_insert = sql.strip().upper().startswith("INSERT") and " OR " not in sql.upper()[:12]
+            if is_insert:
+                try:
+                    id_cur = self.conn.cursor()
+                    id_cur.execute("SELECT LASTVAL()")
+                    cur.lastrowid = id_cur.fetchone()[0]
+                    id_cur.close()
+                except Exception:
+                    cur.lastrowid = None
+            else:
+                cur.lastrowid = None
+            return cur
+        else:
+            return self.conn.execute(sql, params or ())
+
+    def executescript(self, script):
+        if DB_TYPE == "postgres":
+            cur = self.conn.cursor()
+            for statement in script.split(";"):
+                s = statement.strip()
+                if s:
+                    cur.execute(s)
+            cur.close()
+        else:
+            self.conn.executescript(script)
+
+    def executemany(self, sql, params_seq):
+        if DB_TYPE == "postgres":
+            pg_sql = sql.replace("?", "%s")
+            cur = self.conn.cursor()
+            cur.executemany(pg_sql, params_seq)
+            cur.close()
+        else:
+            self.conn.executemany(sql, params_seq)
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
 
 
 def get_db():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode = WAL")
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return DBConnection()
 
 
-def init_schema():
-    conn = get_db()
-    conn.executescript("""
+def _schema_sqlite():
+    return """
         CREATE TABLE IF NOT EXISTS destinos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
@@ -127,7 +193,122 @@ def init_schema():
             leida INTEGER DEFAULT 0,
             creada TEXT NOT NULL
         );
-    """)
+    """
+
+
+def _schema_postgres():
+    return """
+        CREATE TABLE IF NOT EXISTS destinos (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            departamento TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            descripcion TEXT DEFAULT '',
+            imagen TEXT DEFAULT '',
+            imagenes TEXT DEFAULT '[]'
+        );
+
+        CREATE TABLE IF NOT EXISTS paquetes (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            duracion TEXT DEFAULT '',
+            precio INTEGER DEFAULT 0,
+            cupo INTEGER DEFAULT 0,
+            descripcion TEXT DEFAULT '',
+            estado TEXT DEFAULT 'Disponible',
+            imagen TEXT DEFAULT '',
+            precio_oferta INTEGER,
+            en_oferta INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS paquete_destinos (
+            id SERIAL PRIMARY KEY,
+            paquete_id INTEGER NOT NULL REFERENCES paquetes(id),
+            destino_id INTEGER NOT NULL REFERENCES destinos(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS guias (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT NOT NULL,
+            email TEXT DEFAULT '',
+            telefono TEXT DEFAULT '',
+            estado TEXT DEFAULT 'Activo'
+        );
+
+        CREATE TABLE IF NOT EXISTS guia_idiomas (
+            id SERIAL PRIMARY KEY,
+            guia_id INTEGER NOT NULL REFERENCES guias(id),
+            idioma TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS reservas (
+            id SERIAL PRIMARY KEY,
+            paquete_id INTEGER NOT NULL REFERENCES paquetes(id),
+            destino_id INTEGER REFERENCES destinos(id),
+            guia_id INTEGER NOT NULL REFERENCES guias(id),
+            fecha_salida TEXT DEFAULT '',
+            estado TEXT DEFAULT 'Pendiente',
+            total INTEGER DEFAULT 0,
+            pagado INTEGER DEFAULT 0,
+            cliente_nombre TEXT DEFAULT '',
+            cliente_email TEXT DEFAULT '',
+            cliente_telefono TEXT DEFAULT ''
+        );
+
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
+            nombre TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user',
+            verified INTEGER DEFAULT 0,
+            verification_code TEXT,
+            verification_expiry TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT);
+
+        CREATE TABLE IF NOT EXISTS pagos (
+            id SERIAL PRIMARY KEY,
+            reserva_id INTEGER NOT NULL REFERENCES reservas(id),
+            metodo TEXT NOT NULL,
+            monto INTEGER NOT NULL,
+            estado TEXT DEFAULT 'completado',
+            referencia TEXT DEFAULT '',
+            creada TIMESTAMP DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS registros_pendientes (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL,
+            email TEXT NOT NULL,
+            password TEXT NOT NULL,
+            nombre TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user',
+            verification_code TEXT,
+            verification_expiry TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS notificaciones (
+            id SERIAL PRIMARY KEY,
+            usuario_id INTEGER NOT NULL,
+            tipo TEXT NOT NULL,
+            mensaje TEXT NOT NULL,
+            relacion_id INTEGER DEFAULT NULL,
+            leida INTEGER DEFAULT 0,
+            creada TIMESTAMP NOT NULL
+        );
+    """
+
+
+def init_schema():
+    conn = get_db()
+    if DB_TYPE == "postgres":
+        conn.executescript(_schema_postgres())
+    else:
+        conn.executescript(_schema_sqlite())
     conn.commit()
     conn.close()
 
@@ -137,32 +318,32 @@ def migrate():
     try:
         conn.execute("ALTER TABLE destinos ADD COLUMN imagenes TEXT DEFAULT '[]'")
         print("Migracion: columna imagenes agregada a destinos")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         conn.execute("ALTER TABLE reservas ADD COLUMN destino_id INTEGER REFERENCES destinos(id)")
         print("Migracion: columna destino_id agregada a reservas")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         conn.execute("ALTER TABLE reservas ADD COLUMN cliente_nombre TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         conn.execute("ALTER TABLE reservas ADD COLUMN cliente_email TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         conn.execute("ALTER TABLE reservas ADD COLUMN cliente_telefono TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         conn.execute("ALTER TABLE paquetes ADD COLUMN precio_oferta INTEGER")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     try:
         conn.execute("ALTER TABLE paquetes ADD COLUMN en_oferta INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     conn.commit()
     conn.close()
@@ -257,7 +438,10 @@ def seed():
                 (username, email, password, nombre, role, verified, code, expiry),
             )
 
-    conn.execute("INSERT OR IGNORE INTO _meta (key, value) VALUES ('seeded', '1')")
+    if DB_TYPE == "postgres":
+        conn.execute("INSERT INTO _meta (key, value) VALUES ('seeded', '1') ON CONFLICT (key) DO NOTHING")
+    else:
+        conn.execute("INSERT OR IGNORE INTO _meta (key, value) VALUES ('seeded', '1')")
 
     conn.commit()
     conn.close()

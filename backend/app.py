@@ -139,9 +139,10 @@ def create_notification(tipo, mensaje, relacion_id=None):
         "SELECT id FROM usuarios WHERE username = 'admin'"
     ).fetchone()
     if admin:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn.execute(
-            "INSERT INTO notificaciones (usuario_id, tipo, mensaje, relacion_id, creada) VALUES (?, ?, ?, ?, datetime('now','localtime'))",
-            (admin["id"], tipo, mensaje, relacion_id),
+            "INSERT INTO notificaciones (usuario_id, tipo, mensaje, relacion_id, creada) VALUES (?, ?, ?, ?, ?)",
+            (admin["id"], tipo, mensaje, relacion_id, now),
         )
         conn.commit()
     conn.close()
