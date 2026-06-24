@@ -95,11 +95,24 @@ STATIC_PATH = Path(__file__).parent / "static"
 STATIC_FOLDER = STATIC_PATH if STATIC_PATH.exists() and STATIC_PATH.is_dir() else FRONTEND_PATH
 
 # Auto-seed on first run
-init_schema()
-migrate()
-if not is_seeded():
-    print("Primera ejecución: poblando base de datos...")
-    seed()
+try:
+    init_schema()
+    migrate()
+    if not is_seeded():
+        print("Primera ejecución: poblando base de datos...")
+        seed()
+except Exception as e:
+    print(f"ERROR al inicializar BD: {e}")
+    import traceback
+    traceback.print_exc()
+
+
+# ─── HEALTHCHECK ───
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
 
 # ─── HELPERS ───

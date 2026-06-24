@@ -28,8 +28,11 @@ class DBConnection:
         db_path = Path(db_dir) / "exploracolombia.db"
         self.conn = sqlite3.connect(str(db_path))
         self.conn.row_factory = sqlite3.Row
-        self.conn.execute("PRAGMA journal_mode = WAL")
-        self.conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            self.conn.execute("PRAGMA journal_mode = WAL")
+            self.conn.execute("PRAGMA foreign_keys = ON")
+        except Exception:
+            pass
 
     def execute(self, sql, params=None):
         if DB_TYPE == "postgres":
@@ -71,6 +74,9 @@ class DBConnection:
 
     def commit(self):
         self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
 
     def close(self):
         self.conn.close()
