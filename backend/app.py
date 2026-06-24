@@ -28,6 +28,11 @@ MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "").strip()
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "").strip()
 MAIL_FROM = os.environ.get("MAIL_FROM", MAIL_USERNAME or "onboarding@resend.dev")
 
+_has_resend = bool(os.environ.get("RESEND_API_KEY", "").strip())
+print(f"[DEBUG] RESEND_API_KEY presente al inicio: {_has_resend}")
+print(f"[DEBUG] MAIL_USERNAME presente al inicio: {bool(MAIL_USERNAME)}")
+print(f"[DEBUG] MAIL_PASSWORD presente al inicio: {bool(MAIL_PASSWORD)}")
+
 
 def _smtp_settings(email):
     domain = email.lower().split("@")[-1] if "@" in email else ""
@@ -52,6 +57,7 @@ def _smtp_settings(email):
 
 def send_email(to, subject, html_body):
     resend_api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    print(f"[DEBUG] send_email: RESEND_API_KEY presente={bool(resend_api_key)}, MAIL_USERNAME presente={bool(MAIL_USERNAME)}")
     if resend_api_key:
         try:
             import resend
@@ -131,6 +137,15 @@ except Exception as e:
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})
+
+@app.route("/debug-env")
+def debug_env():
+    return jsonify({
+        "RESEND_API_KEY": bool(os.environ.get("RESEND_API_KEY", "").strip()),
+        "MAIL_USERNAME": bool(MAIL_USERNAME),
+        "MAIL_PASSWORD": bool(MAIL_PASSWORD),
+        "MAIL_FROM": MAIL_FROM or None,
+    })
 
 
 # ─── HELPERS ───
