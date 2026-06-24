@@ -1,7 +1,4 @@
 {
-  "build": {
-    "builder": "DOCKERFILE"
-  },
   "deploy": {
     "healthcheckPath": "/api/stats",
     "restartPolicyType": "ON_FAILURE"
