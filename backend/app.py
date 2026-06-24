@@ -1,10 +1,12 @@
 import os
 import sys
 import random
+import json
 import smtplib
 import socket
 import subprocess
 import threading
+import urllib.request
 from email.mime.text import MIMEText
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -56,19 +58,27 @@ def _smtp_settings(email):
 
 
 def send_email(to, subject, html_body):
-    resend_api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    print(f"[DEBUG] send_email: RESEND_API_KEY presente={bool(resend_api_key)}, MAIL_USERNAME presente={bool(MAIL_USERNAME)}")
-    if resend_api_key:
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if api_key:
         try:
-            import resend
-            resend.api_key = resend_api_key
-            resend.Emails.send({
-                "from": MAIL_FROM or "onboarding@resend.dev",
+            body = json.dumps({
+                "from": "onboarding@resend.dev",
                 "to": [to],
                 "subject": subject,
                 "html": html_body,
-            })
-            print(f"Correo enviado a {to} vía Resend")
+            }).encode()
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=body,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            resp = urllib.request.urlopen(req, timeout=15)
+            print(f"Correo enviado a {to} vía Resend (HTTP {resp.status})")
+            resp.close()
             return True
         except Exception as e:
             print(f"Error al enviar correo vía Resend a {to}: {e}")
