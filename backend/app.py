@@ -7,6 +7,7 @@ import socket
 import subprocess
 import threading
 import urllib.request
+import urllib.error
 from email.mime.text import MIMEText
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -80,6 +81,10 @@ def send_email(to, subject, html_body):
             print(f"Correo enviado a {to} vía Resend (HTTP {resp.status})")
             resp.close()
             return True
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode(errors="replace")
+            print(f"Error HTTP {e.code} de Resend para {to}: {detail}")
+            return False
         except Exception as e:
             print(f"Error al enviar correo vía Resend a {to}: {e}")
             return False
