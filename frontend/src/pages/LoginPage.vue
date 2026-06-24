@@ -120,13 +120,7 @@ async function handleRegister() {
     })
     registeredEmail.value = regEmail.value.trim()
     verifyEmail.value = registeredEmail.value
-    if (result.code) {
-      successMsg.value = 'MODO DESARROLLO — Código: ' + result.code
-    } else if (result.sent) {
-      successMsg.value = 'Código enviado a ' + registeredEmail.value
-    } else {
-      successMsg.value = 'Correo registrado. Revisa la consola del servidor para ver el código.'
-    }
+    successMsg.value = 'Código de verificación enviado a ' + registeredEmail.value
     switchMode('verify')
   } catch (e) {
     errorMsg.value = e.message || 'Error al registrarse'
@@ -158,12 +152,8 @@ async function handleResend() {
   clearMsgs()
   loading.value = true
   try {
-    const result = await api.resendCode(verifyEmail.value)
-    if (result.code) {
-      successMsg.value = 'MODO DESARROLLO — Nuevo código: ' + result.code
-    } else {
-      successMsg.value = 'Código reenviado a ' + verifyEmail.value
-    }
+    await api.resendCode(verifyEmail.value)
+    successMsg.value = 'Código reenviado a ' + verifyEmail.value
   } catch (e) {
     errorMsg.value = e.message || 'Error al reenviar código'
   } finally {

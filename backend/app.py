@@ -240,17 +240,13 @@ def register():
         <p style="text-align:center;color:#6f7a70;font-size:11px;margin-top:24px;">&copy; 2026 ExploraColombia Tours &mdash; Todos los derechos reservados</p>
     </div>
     """
-    sent = send_email(email, "Tu código de verificación - ExploraColombia", html)
-    smtp_configured = bool(MAIL_USERNAME and MAIL_PASSWORD)
+    send_email(email, "Tu código de verificación - ExploraColombia", html)
     print(f"\nCODIGO DE VERIFICACION para {email}: {code}\n")
 
     resp = {
         "message": "Registro exitoso. Revisa tu correo para el código de verificación.",
         "email": email,
-        "sent": sent,
     }
-    if not smtp_configured:
-        resp["code"] = code
     return jsonify(resp), 201
 
 
@@ -351,14 +347,10 @@ def resend_code():
         <p style="text-align:center;color:#6f7a70;font-size:11px;margin-top:24px;">&copy; 2026 ExploraColombia Tours &mdash; Todos los derechos reservados</p>
     </div>
     """
-    sent = send_email(email, "Nuevo código de verificación - ExploraColombia", html)
-    smtp_configured = bool(MAIL_USERNAME and MAIL_PASSWORD)
+    send_email(email, "Nuevo código de verificación - ExploraColombia", html)
     print(f"Nuevo codigo para {email}: {code}")
 
-    resp = {"message": "Código reenviado a tu correo.", "sent": sent}
-    if not smtp_configured:
-        resp["code"] = code
-    return jsonify(resp), 200
+    return jsonify({"message": "Código reenviado a tu correo."}), 200
 
 
 # ─── STATIC FILES & SPA FALLBACK ───
