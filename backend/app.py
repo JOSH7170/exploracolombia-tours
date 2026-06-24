@@ -31,10 +31,9 @@ MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "").strip()
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "").strip()
 MAIL_FROM = os.environ.get("MAIL_FROM", MAIL_USERNAME or "onboarding@resend.dev")
 
-_has_resend = bool(os.environ.get("RESEND_API_KEY", "").strip())
-print(f"[DEBUG] RESEND_API_KEY presente al inicio: {_has_resend}")
-print(f"[DEBUG] MAIL_USERNAME presente al inicio: {bool(MAIL_USERNAME)}")
-print(f"[DEBUG] MAIL_PASSWORD presente al inicio: {bool(MAIL_PASSWORD)}")
+_has_api = bool(os.environ.get("RESEND_API_KEY", "").strip())
+print(f"[DEBUG] API key presente al inicio: {_has_api}")
+print(f"[DEBUG] MAIL_FROM: {MAIL_FROM}")
 
 
 def _smtp_settings(email):
@@ -61,33 +60,34 @@ def _smtp_settings(email):
 def send_email(to, subject, html_body):
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
     if api_key:
+        sender_email = os.environ.get("MAIL_FROM", "joshuasaltarin@hotmail.com")
         try:
             body = json.dumps({
-                "from": "onboarding@resend.dev",
-                "to": [to],
+                "sender": {"email": sender_email, "name": "ExploraColombia Tours"},
+                "to": [{"email": to}],
                 "subject": subject,
-                "html": html_body,
+                "htmlContent": html_body,
             }).encode()
             req = urllib.request.Request(
-                "https://api.resend.com/emails",
+                "https://api.brevo.com/v3/smtp/email",
                 data=body,
                 headers={
-                    "Authorization": f"Bearer {api_key}",
+                    "api-key": api_key,
                     "Content-Type": "application/json",
-                    "User-Agent": "ExploraColombia/1.0",
+                    "Accept": "application/json",
                 },
                 method="POST",
             )
             resp = urllib.request.urlopen(req, timeout=15)
-            print(f"Correo enviado a {to} vía Resend (HTTP {resp.status})")
+            print(f"Correo enviado a {to} vía Brevo (HTTP {resp.status})")
             resp.close()
             return True
         except urllib.error.HTTPError as e:
             detail = e.read().decode(errors="replace")
-            print(f"Error HTTP {e.code} de Resend para {to}: {detail}")
+            print(f"Error HTTP {e.code} de Brevo para {to}: {detail}")
             return False
         except Exception as e:
-            print(f"Error al enviar correo vía Resend a {to}: {e}")
+            print(f"Error al enviar correo vía Brevo a {to}: {e}")
             return False
 
     if not MAIL_USERNAME or not MAIL_PASSWORD:
