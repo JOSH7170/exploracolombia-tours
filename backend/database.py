@@ -41,12 +41,10 @@ class DBConnection:
                 try:
                     id_cur = self.conn.cursor()
                     id_cur.execute("SELECT LASTVAL()")
-                    cur.lastrowid = id_cur.fetchone()[0]
+                    cur._lastrowid = id_cur.fetchone()[0]
                     id_cur.close()
                 except Exception:
-                    cur.lastrowid = None
-            else:
-                cur.lastrowid = None
+                    cur._lastrowid = None
             return cur
         else:
             return self.conn.execute(sql, params or ())
@@ -80,6 +78,12 @@ class DBConnection:
 
 def get_db():
     return DBConnection()
+
+
+def lastrowid(cur):
+    if DB_TYPE == "postgres":
+        return cur._lastrowid if hasattr(cur, "_lastrowid") else None
+    return cur.lastrowid
 
 
 def _schema_sqlite():
@@ -408,7 +412,7 @@ def seed():
         for idioma in idiomas:
             conn.execute(
                 "INSERT INTO guia_idiomas (guia_id, idioma) VALUES (?, ?)",
-                (cur.lastrowid, idioma),
+                (lastrowid(cur), idioma),
             )
 
     reservas = [

@@ -17,7 +17,7 @@ try:
 except ImportError:
     pass
 
-from database import get_db, init_schema, migrate, is_seeded, seed
+from database import get_db, init_schema, migrate, is_seeded, seed, lastrowid
 
 app = Flask(__name__, static_folder=None)
 CORS(app)
@@ -406,7 +406,7 @@ def create_destino():
         "INSERT INTO destinos (nombre, departamento, tipo, descripcion, imagen, imagenes) VALUES (?, ?, ?, ?, ?, ?)",
         (nombre, departamento, tipo, descripcion, imagen, imagenes),
     )
-    row = conn.execute("SELECT * FROM destinos WHERE id = ?", (cur.lastrowid,)).fetchone()
+    row = conn.execute("SELECT * FROM destinos WHERE id = ?", (lastrowid(cur),)).fetchone()
     conn.commit()
     conn.close()
     return jsonify(row_to_dict(row)), 201
@@ -507,7 +507,7 @@ def create_paquete():
             data.get("enOferta", 0),
         ),
     )
-    paquete_id = cur.lastrowid
+    paquete_id = lastrowid(cur)
     for did in data.get("destinos", []):
         conn.execute(
             "INSERT INTO paquete_destinos (paquete_id, destino_id) VALUES (?, ?)",
@@ -628,7 +628,7 @@ def create_guia():
             data.get("estado", "Activo"),
         ),
     )
-    guia_id = cur.lastrowid
+    guia_id = lastrowid(cur)
     for idioma in data.get("idiomas", []):
         conn.execute(
             "INSERT INTO guia_idiomas (guia_id, idioma) VALUES (?, ?)",
@@ -767,7 +767,7 @@ def create_reserva():
         "INSERT INTO reservas (paquete_id, destino_id, guia_id, fecha_salida, estado, total, pagado, cliente_nombre, cliente_email, cliente_telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (paquete_id, destino_id, guia_id, fecha_salida, estado, total, pagado, cliente_nombre, cliente_email, cliente_telefono),
     )
-    reserva_id = cur.lastrowid
+    reserva_id = lastrowid(cur)
     row = conn.execute(RESERVAS_SELECT + " WHERE id = ?", (reserva_id,)).fetchone()
     conn.commit()
     conn.close()
