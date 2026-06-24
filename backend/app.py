@@ -4,6 +4,7 @@ import random
 import smtplib
 import socket
 import subprocess
+import threading
 from email.mime.text import MIMEText
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -254,7 +255,7 @@ def register():
         <p style="text-align:center;color:#6f7a70;font-size:11px;margin-top:24px;">&copy; 2026 ExploraColombia Tours &mdash; Todos los derechos reservados</p>
     </div>
     """
-    send_email(email, "Tu código de verificación - ExploraColombia", html)
+    threading.Thread(target=send_email, args=(email, "Tu código de verificación - ExploraColombia", html), daemon=True).start()
     print(f"\nCODIGO DE VERIFICACION para {email}: {code}\n")
 
     resp = {
@@ -361,7 +362,7 @@ def resend_code():
         <p style="text-align:center;color:#6f7a70;font-size:11px;margin-top:24px;">&copy; 2026 ExploraColombia Tours &mdash; Todos los derechos reservados</p>
     </div>
     """
-    send_email(email, "Nuevo código de verificación - ExploraColombia", html)
+    threading.Thread(target=send_email, args=(email, "Nuevo código de verificación - ExploraColombia", html), daemon=True).start()
     print(f"Nuevo codigo para {email}: {code}")
 
     return jsonify({"message": "Código reenviado a tu correo."}), 200
@@ -925,7 +926,7 @@ def pagar_reserva(id):
             <p style="text-align:center;color:#6f7a70;font-size:11px;margin-top:24px;">&copy; 2026 ExploraColombia Tours &mdash; Todos los derechos reservados</p>
         </div>
         """
-        send_email(email_cliente, "Reserva confirmada - ExploraColombia Tours", html)
+        threading.Thread(target=send_email, args=(email_cliente, "Reserva confirmada - ExploraColombia Tours", html), daemon=True).start()
 
     return jsonify({"message": "Pago procesado exitosamente", "pagado": nuevo_pagado, "estado": row["estado"]})
 
