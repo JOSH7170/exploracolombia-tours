@@ -26,7 +26,7 @@ CORS(app)
 # ─── EMAIL CONFIG ───
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "").strip()
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "").strip()
-MAIL_FROM = os.environ.get("MAIL_FROM", MAIL_USERNAME)
+MAIL_FROM = os.environ.get("MAIL_FROM", MAIL_USERNAME or "onboarding@resend.dev")
 
 
 def _smtp_settings(email):
@@ -51,6 +51,23 @@ def _smtp_settings(email):
 
 
 def send_email(to, subject, html_body):
+    resend_api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if resend_api_key:
+        try:
+            import resend
+            resend.api_key = resend_api_key
+            resend.Emails.send({
+                "from": MAIL_FROM or "onboarding@resend.dev",
+                "to": [to],
+                "subject": subject,
+                "html": html_body,
+            })
+            print(f"Correo enviado a {to} vía Resend")
+            return True
+        except Exception as e:
+            print(f"Error al enviar correo vía Resend a {to}: {e}")
+            return False
+
     if not MAIL_USERNAME or not MAIL_PASSWORD:
         print(f"[AVISO] SMTP no configurado. No se pudo enviar correo a {to}")
         print(f"[AVISO] Para configurar, edita backend/.env con tu correo y contraseña de aplicación")
