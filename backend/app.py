@@ -30,6 +30,7 @@ CORS(app)
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "").strip()
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "").strip()
 MAIL_FROM = os.environ.get("MAIL_FROM", MAIL_USERNAME or "onboarding@resend.dev")
+SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
 
 _has_api = bool(os.environ.get("RESEND_API_KEY", "").strip())
 print(f"[DEBUG] API key presente al inicio: {_has_api}")
@@ -414,6 +415,111 @@ def resend_code():
     print(f"Nuevo codigo para {email}: {code}")
 
     return jsonify({"message": "Código reenviado a tu correo."}), 200
+
+
+# ─────── PASSWORD RESET ───────
+
+
+@app.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json(silent=True) or {}
+    email = data.get("email", "").strip().lower()
+    if not email or "@" not in email:
+        return error_response("Correo válido requerido")
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT * FROM usuarios WHERE email = ? AND verified = 1",
+        (email,),
+    ).fetchone()
+
+    if user:
+        code = str(random.randint(100000, 999999))
+        expiry = (datetime.now() + timedelta(minutes=15)).isoformat()
+        conn.execute(
+            "UPDATE usuarios SET reset_code = ?, reset_expiry = ? WHERE id = ?",
+            (code, expiry, user["id"]),
+        )
+        conn.commit()
+
+        html = f"""
+        <div style="font-family:Inter,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9f9fc;border-radius:16px;">
+            <div style="text-align:center;margin-bottom:24px;">
+                <div style="width:64px;height:64px;background:#00522c;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <svg viewBox="0 0 40 40" width="32" height="32" style="display:block">
+                    <circle cx="20" cy="20" r="17" stroke="#92ecae" stroke-width="1.5" fill="none"/>
+                    <polygon points="20,3 24,20 20,37 16,20" fill="#92ecae"/>
+                    <polygon points="3,20 20,16 37,20 20,24" fill="#92ecae" opacity="0.35"/>
+                    <circle cx="20" cy="20" r="2.2" fill="#00522c"/>
+                </svg>
+            </div>
+                <h1 style="font-family:Montserrat,sans-serif;color:#00522c;font-size:24px;margin:0;">ExploraColombia Tours</h1>
+            </div>
+            <div style="background:#fff;border-radius:12px;padding:32px;box-shadow:0 8px 32px rgba(0,109,60,0.05);">
+                <h2 style="font-family:Montserrat,sans-serif;color:#1a1c1e;font-size:18px;margin:0 0 8px;">Restablecer contrase&ntilde;a</h2>
+                <p style="color:#3f4941;font-size:14px;line-height:1.6;margin:0 0 20px;">Usa el siguiente c&oacute;digo para restablecer tu contrase&ntilde;a. Expira en 15 minutos.</p>
+                <div style="background:#f3f3f6;border-radius:12px;padding:20px;text-align:center;">
+                    <span style="font-family:monospace;font-size:36px;font-weight:800;letter-spacing:8px;color:#00522c;">{code}</span>
+                </div>
+                <p style="color:#6f7a70;font-size:12px;margin:20px 0 0;text-align:center;">Si no solicitaste esto, ignora este mensaje.</p>
+            </div>
+            <p style="text-align:center;color:#6f7a70;font-size:11px;margin-top:24px;">&copy; 2026 ExploraColombia Tours &mdash; Todos los derechos reservados</p>
+        </div>
+        """
+        threading.Thread(target=send_email, args=(email, "Código para restablecer tu contraseña - ExploraColombia", html), daemon=True).start()
+        print(f"\nCODIGO DE RESET para {email}: {code}\n")
+
+    conn.close()
+    return jsonify({"message": "Si el correo está registrado, recibirás un código de recuperación."})
+
+
+@app.route("/api/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json(silent=True) or {}
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip()
+    new_password = data.get("newPassword", "").strip()
+
+    if not email or not code or not new_password:
+        return error_response("Todos los campos son requeridos")
+    if len(new_password) < 4:
+        return error_response("La contraseña debe tener al menos 4 caracteres")
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT * FROM usuarios WHERE email = ? AND verified = 1 AND reset_code = ?",
+        (email, code),
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        return error_response("Código inválido", 400)
+
+    if not user["reset_expiry"]:
+        conn.close()
+        return error_response("Código inválido", 400)
+
+    try:
+        expiry = datetime.fromisoformat(user["reset_expiry"])
+    except Exception:
+        conn.close()
+        return error_response("Código inválido", 400)
+
+    if datetime.now() > expiry:
+        conn.execute("UPDATE usuarios SET reset_code = NULL, reset_expiry = NULL WHERE id = ?", (user["id"],))
+        conn.commit()
+        conn.close()
+        return error_response("El código ha expirado. Solicita uno nuevo.", 400)
+
+    conn.execute(
+        "UPDATE usuarios SET password = ?, reset_code = NULL, reset_expiry = NULL WHERE id = ?",
+        (new_password, user["id"]),
+    )
+    conn.commit()
+    conn.close()
+
+    print(f"Contraseña restablecida para {email}")
+    return jsonify({"message": "Contraseña actualizada exitosamente. Ahora puedes iniciar sesión."})
 
 
 # ─── STATIC FILES & SPA FALLBACK ───
@@ -950,13 +1056,13 @@ def pagar_reserva(id):
         <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f9f9fc;border-radius:16px;">
             <div style="text-align:center;margin-bottom:24px;">
                 <div style="width:64px;height:64px;background:#00522c;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-                    <svg viewBox="0 0 40 40" width="32" height="32" style="display:block">
-                        <circle cx="20" cy="20" r="17" stroke="#92ecae" stroke-width="1.5" fill="none"/>
-                        <polygon points="20,3 24,20 20,37 16,20" fill="#92ecae"/>
-                        <polygon points="3,20 20,16 37,20 20,24" fill="#92ecae" opacity="0.35"/>
-                        <circle cx="20" cy="20" r="2.2" fill="#00522c"/>
-                    </svg>
-                </div>
+                <svg viewBox="0 0 40 40" width="32" height="32" style="display:block">
+                    <circle cx="20" cy="20" r="17" stroke="#92ecae" stroke-width="1.5" fill="none"/>
+                    <polygon points="20,3 24,20 20,37 16,20" fill="#92ecae"/>
+                    <polygon points="3,20 20,16 37,20 20,24" fill="#92ecae" opacity="0.35"/>
+                    <circle cx="20" cy="20" r="2.2" fill="#00522c"/>
+                </svg>
+            </div>
                 <h1 style="font-family:Montserrat,sans-serif;color:#00522c;font-size:22px;margin:0;">ExploraColombia Tours</h1>
             </div>
             <div style="background:#fff;border-radius:12px;padding:32px;box-shadow:0 8px 32px rgba(0,109,60,0.05);">

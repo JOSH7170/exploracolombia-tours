@@ -355,6 +355,16 @@ def migrate():
         conn.execute("ALTER TABLE paquetes ADD COLUMN en_oferta INTEGER DEFAULT 0")
     except Exception:
         pass
+    try:
+        conn.execute("ALTER TABLE usuarios ADD COLUMN reset_code TEXT")
+        print("Migracion: columna reset_code agregada a usuarios")
+    except Exception:
+        pass
+    try:
+        conn.execute("ALTER TABLE usuarios ADD COLUMN reset_expiry TEXT")
+        print("Migracion: columna reset_expiry agregada a usuarios")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
