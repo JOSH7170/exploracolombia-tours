@@ -28,6 +28,13 @@ const regConfirm = ref('')
 const verifyEmail = ref('')
 const verifyCode = ref('')
 
+// Forgot password fields
+const forgotEmail = ref('')
+const forgotCode = ref('')
+const forgotNewPassword = ref('')
+const forgotConfirm = ref('')
+const forgotStep = ref('email')
+
 const mode = ref('login')
 const registeredEmail = ref('')
 
@@ -160,6 +167,56 @@ async function handleResend() {
     loading.value = false
   }
 }
+
+async function handleForgotRequest() {
+  clearMsgs()
+  if (!forgotEmail.value.trim() || !forgotEmail.value.includes('@')) {
+    errorMsg.value = 'Ingresa un correo válido'
+    return
+  }
+  loading.value = true
+  try {
+    await api.forgotPassword(forgotEmail.value.trim())
+    successMsg.value = 'Si el correo está registrado, recibirás un código.'
+    forgotStep.value = 'reset'
+  } catch (e) {
+    errorMsg.value = e.message || 'Error al solicitar recuperación'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleForgotReset() {
+  clearMsgs()
+  if (!forgotCode.value.trim() || !forgotNewPassword.value.trim() || !forgotConfirm.value.trim()) {
+    errorMsg.value = 'Todos los campos son requeridos'
+    return
+  }
+  if (forgotNewPassword.value.length < 4) {
+    errorMsg.value = 'La contraseña debe tener al menos 4 caracteres'
+    return
+  }
+  if (forgotNewPassword.value !== forgotConfirm.value) {
+    errorMsg.value = 'Las contraseñas no coinciden'
+    return
+  }
+  loading.value = true
+  try {
+    await api.resetPassword(forgotEmail.value.trim(), forgotCode.value.trim(), forgotNewPassword.value)
+    successMsg.value = 'Contraseña actualizada. Ahora puedes iniciar sesión.'
+    switchMode('login')
+    username.value = forgotEmail.value.trim()
+  } catch (e) {
+    errorMsg.value = e.message || 'Error al restablecer contraseña'
+  } finally {
+    loading.value = false
+  }
+}
+
+function switchForgotStep(step) {
+  forgotStep.value = step
+  clearMsgs()
+}
 </script>
 
 <template>
@@ -213,6 +270,9 @@ async function handleResend() {
           </button>
 
           <div class="login-footer">
+            <a href="#" @click.prevent="switchMode('forgot')" class="toggle-link" style="margin-bottom:8px;display:inline-block;">
+              ¿Olvidaste tu contraseña?
+            </a>
             <a href="#" @click.prevent="switchMode('register')" class="toggle-link">
               ¿No tienes cuenta? Regístrate
             </a>
@@ -295,6 +355,81 @@ async function handleResend() {
             <a href="#" @click.prevent="handleResend" class="toggle-link" style="margin-bottom:8px;display:inline-block;">
               ¿No recibiste el código? Reenviar
             </a>
+            <a href="#" @click.prevent="switchMode('login')" class="toggle-link">
+              Volver a inicio de sesión
+            </a>
+          </div>
+        </form>
+
+        <!-- FORGOT PASSWORD FORM -->
+        <form v-if="mode === 'forgot'" class="login-form" @submit.prevent="forgotStep === 'email' ? handleForgotRequest() : handleForgotReset()">
+          <!-- Step 1: Enter email -->
+          <template v-if="forgotStep === 'email'">
+            <div class="verify-info">
+              <span class="material-symbols-outlined" style="font-size:48px;color:var(--primary);margin-bottom:12px">lock_reset</span>
+              <p>Ingresa tu correo para recuperar tu contraseña</p>
+            </div>
+
+            <div class="form-group">
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined icon">mail</span>
+                <input type="email" v-model="forgotEmail" placeholder="Correo electrónico" required>
+              </div>
+            </div>
+
+            <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
+            <p v-if="successMsg" class="login-success">{{ successMsg }}</p>
+
+            <button type="submit" class="btn-login" :disabled="loading">
+              <span v-if="loading" class="material-symbols-outlined" style="animation:spin 1s linear infinite">refresh</span>
+              <span v-else class="material-symbols-outlined">send</span>
+              {{ loading ? 'Enviando...' : 'Enviar Código' }}
+            </button>
+          </template>
+
+          <!-- Step 2: Enter code + new password -->
+          <template v-if="forgotStep === 'reset'">
+            <div class="verify-info">
+              <span class="material-symbols-outlined" style="font-size:48px;color:var(--primary);margin-bottom:12px">key</span>
+              <p>Ingresa el código y tu nueva contraseña</p>
+              <strong>{{ forgotEmail }}</strong>
+            </div>
+
+            <div class="form-group">
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined icon">pin</span>
+                <input type="text" v-model="forgotCode" placeholder="Código de 6 dígitos" maxlength="6" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined icon">lock</span>
+                <input type="password" v-model="forgotNewPassword" placeholder="Nueva contraseña" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined icon">lock</span>
+                <input type="password" v-model="forgotConfirm" placeholder="Confirmar contraseña" required>
+              </div>
+            </div>
+
+            <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
+            <p v-if="successMsg" class="login-success">{{ successMsg }}</p>
+
+            <button type="submit" class="btn-login" :disabled="loading">
+              <span v-if="loading" class="material-symbols-outlined" style="animation:spin 1s linear infinite">refresh</span>
+              <span v-else class="material-symbols-outlined">check_circle</span>
+              {{ loading ? 'Cambiando...' : 'Cambiar Contraseña' }}
+            </button>
+          </template>
+
+          <div class="login-footer" style="margin-top:8px;">
+            <template v-if="forgotStep === 'reset'">
+              <a href="#" @click.prevent="switchForgotStep('email')" class="toggle-link" style="margin-bottom:8px;display:inline-block;">
+                Volver a ingresar correo
+              </a>
+            </template>
             <a href="#" @click.prevent="switchMode('login')" class="toggle-link">
               Volver a inicio de sesión
             </a>

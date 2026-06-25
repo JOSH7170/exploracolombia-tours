@@ -113,6 +113,7 @@ const profMsg = ref('')
 function openSettings() {
   settingsOpen.value = true
   setProfile.nombre = store.userNombre
+  setProfile.email = store.userEmail
   passMsg.value = ''
   profMsg.value = ''
 }

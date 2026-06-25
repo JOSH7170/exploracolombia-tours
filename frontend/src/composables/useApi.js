@@ -150,6 +150,20 @@ export function useApi() {
       return request(`${API_BASE}/notificaciones/${id}`, { method: 'DELETE' })
     },
 
+    // Password reset
+    async forgotPassword(email) {
+      return request(`${API_BASE}/forgot-password`, {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      })
+    },
+    async resetPassword(email, code, newPassword) {
+      return request(`${API_BASE}/reset-password`, {
+        method: 'POST',
+        body: JSON.stringify({ email, code, newPassword }),
+      })
+    },
+
     // Perfil
     async cambiarContrasena(actual, nueva, usuario) {
       return request(`${API_BASE}/cambiar-contrasena`, {

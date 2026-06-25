@@ -21,16 +21,90 @@ const selectedDate = ref('')
 const reservando = ref(false)
 const pagoModal = ref(false)
 const reservaActual = ref(null)
+const metodoPago = ref('credito')
 const cardNombre = ref('')
 const cardNumero = ref('')
 const cardExpiracion = ref('')
 const cardCvv = ref('')
 const pagando = ref(false)
+const tocNombre = ref(false)
+const tocNumero = ref(false)
+const tocExp = ref(false)
+const tocCvv = ref(false)
+const showCardErrors = ref(false)
 
 const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 const paqueteSeleccionado = computed(() => paquetes.value.find(p => p.id === parseInt(paqueteId.value)))
 const totalPagar = computed(() => paqueteSeleccionado.value?.precio || 0)
+
+const cardBrand = computed(() => {
+  const num = cardNumero.value.replace(/\s/g, '')
+  if (/^4/.test(num)) return { name: 'Visa', length: 16, cvvLen: 3 }
+  if (/^5[1-5]/.test(num)) return { name: 'Mastercard', length: 16, cvvLen: 3 }
+  if (/^3[47]/.test(num)) return { name: 'American Express', length: 15, cvvLen: 4 }
+  if (/^3(?:0[0-5]|[68])/.test(num)) return { name: 'Diners Club', length: 14, cvvLen: 3 }
+  if (/^6(?:011|5)/.test(num)) return { name: 'Discover', length: 16, cvvLen: 3 }
+  return null
+})
+
+const errNombre = computed(() => cardNombre.value.trim().length < 3 ? 'El nombre del titular es requerido' : '')
+const errNumero = computed(() => {
+  const num = cardNumero.value.replace(/\s/g, '')
+  if (!num) return 'Número de tarjeta requerido'
+  if (!/^\d+$/.test(num)) return 'Solo dígitos'
+  if (num.length < 13) return 'Debe tener al menos 13 dígitos'
+  return ''
+})
+const errExp = computed(() => {
+  const v = cardExpiracion.value.trim()
+  if (!v) return 'Fecha requerida'
+  const parts = v.split('/')
+  if (parts.length !== 2) return 'Formato MM/AA'
+  const mm = parseInt(parts[0]), yy = parseInt(parts[1])
+  if (isNaN(mm) || isNaN(yy)) return 'Fecha inválida'
+  if (mm < 1 || mm > 12) return 'Mes inválido'
+  const now = new Date()
+  const fullY = 2000 + yy
+  if (fullY < now.getFullYear() || (fullY === now.getFullYear() && mm < now.getMonth() + 1))
+    return 'Tarjeta vencida'
+  if (fullY > now.getFullYear() + 10) return 'Año inválido'
+  return ''
+})
+const errCvv = computed(() => {
+  const cvv = cardCvv.value.trim()
+  if (!cvv) return 'CVV requerido'
+  const expectedLen = cardBrand.value?.cvvLen || 3
+  if (cvv.length !== expectedLen) return `Debe tener ${expectedLen} dígitos`
+  return ''
+})
+const cardFormValid = computed(() => !errNombre.value && !errNumero.value && !errExp.value && !errCvv.value)
+
+function mostrarErr(campo) {
+  if (!showCardErrors.value) return false
+  if (campo === 'nombre') return errNombre.value
+  if (campo === 'numero') return errNumero.value
+  if (campo === 'exp') return errExp.value
+  if (campo === 'cvv') return errCvv.value
+  return false
+}
+
+function handleCardInput(e) {
+  showCardErrors.value = false
+  cardNumero.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim()
+}
+
+function handleExpInput(e) {
+  showCardErrors.value = false
+  const v = e.target.value.replace(/[^\d]/g, '')
+  if (v.length > 2) cardExpiracion.value = v.slice(0, 2) + '/' + v.slice(2, 4)
+  else cardExpiracion.value = v
+}
+
+function handleCvvInput(e) {
+  showCardErrors.value = false
+  cardCvv.value = e.target.value.replace(/[^\d]/g, '')
+}
 
 const daysInMonth = computed(() => new Date(calYear.value, calMonth.value + 1, 0).getDate())
 const firstDay = computed(() => new Date(calYear.value, calMonth.value, 1).getDay())
@@ -88,6 +162,14 @@ async function confirmarReserva() {
     store.toast('Correo electrónico inválido', 'error')
     return
   }
+  if (clienteTelefono.value.trim()) {
+    const tel = clienteTelefono.value.replace(/[^\d]/g, '')
+    const telClean = tel.startsWith('57') ? tel.slice(2) : tel
+    if (telClean.length !== 10 || !telClean.startsWith('3')) {
+      store.toast('Teléfono inválido. Ingresa un número celular colombiano de 10 dígitos (ej: 3001234567)', 'error')
+      return
+    }
+  }
   reservando.value = true
   try {
     const data = {
@@ -110,17 +192,12 @@ async function confirmarReserva() {
 
 async function procesarPago() {
   if (!reservaActual.value) return
-  const nombre = cardNombre.value.trim()
-  const numero = cardNumero.value.replace(/\s/g, '')
-  const exp = cardExpiracion.value.trim()
-  const cvv = cardCvv.value.trim()
-  if (!nombre || numero.length < 13 || !exp || cvv.length < 3) {
-    store.toast('Completa todos los datos de la tarjeta', 'error')
-    return
-  }
+  showCardErrors.value = true
+  if (!cardFormValid.value) return
+  const metodo = metodoPago.value === 'credito' ? 'Tarjeta de Crédito' : 'Tarjeta de Débito'
   pagando.value = true
   try {
-    await api.pagarReserva(reservaActual.value.id, 'Tarjeta de credito', totalPagar.value)
+    await api.pagarReserva(reservaActual.value.id, metodo, totalPagar.value)
     store.toast('Pago procesado. Revisa tu correo para el recibo.', 'success')
     pagoModal.value = false
     clienteNombre.value = ''
@@ -130,10 +207,12 @@ async function procesarPago() {
     guiaId.value = ''
     selectedDate.value = ''
     reservaActual.value = null
+    metodoPago.value = 'credito'
     cardNombre.value = ''
     cardNumero.value = ''
     cardExpiracion.value = ''
     cardCvv.value = ''
+    showCardErrors.value = false
   } catch (e) {
     store.toast('Error al procesar pago: ' + e.message, 'error')
   } finally {
@@ -229,7 +308,10 @@ async function procesarPago() {
       <div v-if="pagoModal" class="pago-overlay" @click.self="pagoModal = false">
         <div class="pago-modal">
           <div class="pago-header">
-            <h3><span class="material-symbols-outlined" style="color:var(--secondary)">credit_card</span> Pago con tarjeta</h3>
+            <h3>
+              <span class="material-symbols-outlined" style="color:var(--secondary)" v-text="metodoPago === 'credito' ? 'credit_card' : 'account_balance'"></span>
+              Pago con tarjeta
+            </h3>
             <button class="cal-nav" @click="pagoModal = false">&times;</button>
           </div>
           <div class="pago-body">
@@ -239,23 +321,46 @@ async function procesarPago() {
               <div><strong>Fecha:</strong> {{ selectedDate }}</div>
               <div style="font-size:20px;font-weight:700;color:var(--primary);margin-top:8px">{{ api.formatCurrency(totalPagar) }}</div>
             </div>
+
+            <!-- Metodo selector -->
+            <div class="metodo-selector">
+              <button type="button" class="metodo-btn" :class="{ active: metodoPago === 'credito' }" @click="metodoPago = 'credito'; showCardErrors = false">
+                <span class="material-symbols-outlined">credit_card</span>
+                <span>Crédito</span>
+              </button>
+              <button type="button" class="metodo-btn" :class="{ active: metodoPago === 'debito' }" @click="metodoPago = 'debito'; showCardErrors = false">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span>Débito</span>
+              </button>
+            </div>
+
             <form @submit.prevent="procesarPago" class="card-form">
               <div class="form-group">
                 <label>Titular de la tarjeta</label>
-                <input type="text" v-model="cardNombre" placeholder="Nombre como aparece en la tarjeta" required>
+                <input type="text" v-model="cardNombre" @blur="tocNombre = true" placeholder="Nombre como aparece en la tarjeta" :class="{ 'field-error': mostrarErr('nombre') }">
+                <p v-if="mostrarErr('nombre')" class="field-err-msg">{{ mostrarErr('nombre') }}</p>
               </div>
               <div class="form-group">
                 <label>Número de tarjeta</label>
-                <input type="text" v-model="cardNumero" placeholder="0000 0000 0000 0000" maxlength="19" required inputmode="numeric" @input="e => cardNumero.value = e.target.value.replace(/[^\d]/g,'').replace(/(.{4})/g,'$1 ').trim()">
+                <div class="card-input-wrapper">
+                  <input type="text" v-model="cardNumero" @input="handleCardInput" @blur="tocNumero = true" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" :class="{ 'field-error': mostrarErr('numero') }">
+                  <span v-if="cardBrand" class="card-brand-badge">{{ cardBrand.name }}</span>
+                </div>
+                <p v-if="mostrarErr('numero')" class="field-err-msg">{{ mostrarErr('numero') }}</p>
               </div>
               <div class="form-row">
                 <div class="form-group" style="flex:1">
                   <label>Vencimiento</label>
-                  <input type="text" v-model="cardExpiracion" placeholder="MM/AA" maxlength="5" required @input="e => { const v = e.target.value.replace(/[^\d]/g,''); if (v.length > 2) cardExpiracion.value = v.slice(0,2) + '/' + v.slice(2,4); else cardExpiracion.value = v }">
+                  <input type="text" v-model="cardExpiracion" @input="handleExpInput" @blur="tocExp = true" placeholder="MM/AA" maxlength="5" inputmode="numeric" :class="{ 'field-error': mostrarErr('exp') }">
+                  <p v-if="mostrarErr('exp')" class="field-err-msg">{{ mostrarErr('exp') }}</p>
                 </div>
-                <div class="form-group" style="flex:0 0 100px">
+                <div class="form-group" style="flex:0 0 110px">
                   <label>CVV</label>
-                  <input type="text" v-model="cardCvv" placeholder="123" maxlength="4" required inputmode="numeric" @input="e => cardCvv.value = e.target.value.replace(/[^\d]/g,'')">
+                  <div class="cvv-wrapper">
+                    <input type="password" v-model="cardCvv" @input="handleCvvInput" @blur="tocCvv = true" placeholder="***" :maxlength="cardBrand?.cvvLen || 3" inputmode="numeric" :class="{ 'field-error': mostrarErr('cvv') }">
+                    <span class="cvv-helper" title="Código de seguridad de 3 o 4 dígitos al reverso de tu tarjeta">?</span>
+                  </div>
+                  <p v-if="mostrarErr('cvv')" class="field-err-msg">{{ mostrarErr('cvv') }}</p>
                 </div>
               </div>
               <button type="submit" class="btn btn-success" style="width:100%;margin-top:8px" :disabled="pagando">
@@ -420,5 +525,82 @@ async function procesarPago() {
 .card-form .form-row {
   display: flex;
   gap: 12px;
+}
+.metodo-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.metodo-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: 2px solid var(--outline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.metodo-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-fixed);
+  color: var(--on-primary-fixed);
+}
+.metodo-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+.field-err-msg {
+  color: var(--on-error-container);
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.field-error {
+  border-color: var(--error) !important;
+}
+.card-input-wrapper {
+  position: relative;
+}
+.card-input-wrapper input {
+  padding-right: 90px;
+}
+.card-brand-badge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-fixed);
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.cvv-wrapper {
+  position: relative;
+}
+.cvv-helper {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--outline-variant);
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
 }
 </style>

@@ -6,6 +6,7 @@ export const useAppStore = defineStore('app', {
     loggedIn: false,
     username: '',
     userNombre: '',
+    userEmail: '',
     role: '',
     currentSection: 'dashboard',
     editingItem: null,
@@ -28,6 +29,7 @@ export const useAppStore = defineStore('app', {
       this.loggedIn = true
       this.username = user.username
       this.userNombre = user.nombre
+      this.userEmail = user.email
       this.role = user.role
       this.toast(`¡Bienvenido, ${user.nombre}!`, 'success')
     },
